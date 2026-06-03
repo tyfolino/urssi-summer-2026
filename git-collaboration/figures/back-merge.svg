@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 250" font-family="'Helvetica Neue', Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#e8590c"/>
+    </marker>
+  </defs>
+
+  <!-- dev line -->
+  <line x1="70" y1="70" x2="780" y2="70" stroke="#1c7ed6" stroke-width="3"/>
+  <text x="800" y="75" font-size="15" font-weight="bold" fill="#1864ab">dev</text>
+  <!-- main line -->
+  <line x1="70" y1="190" x2="780" y2="190" stroke="#2f9e44" stroke-width="3"/>
+  <text x="800" y="195" font-size="15" font-weight="bold" fill="#2b8a3e">main</text>
+
+  <!-- dev commits -->
+  <circle cx="130" cy="70" r="14" fill="#4263eb"/>
+  <circle cx="300" cy="70" r="14" fill="#4263eb"/>
+  <circle cx="560" cy="70" r="14" fill="#4263eb"/>
+  <!-- main release commit -->
+  <circle cx="430" cy="190" r="16" fill="#2f9e44"/>
+
+  <!-- release merge dev->main -->
+  <path d="M 300 84 C 360 130, 380 150, 430 174" stroke="#868e96" stroke-width="2.5" fill="none" marker-end="url(#arrow)"/>
+  <text x="300" y="135" text-anchor="middle" font-size="13" fill="#495057">release (merge to main + tag)</text>
+
+  <!-- back-merge main->dev (the fix) -->
+  <path d="M 430 206 C 560 235, 610 130, 560 86" stroke="#e8590c" stroke-width="2.5" fill="none" stroke-dasharray="6 4" marker-end="url(#arrow)"/>
+  <text x="640" y="150" text-anchor="middle" font-size="13" fill="#e8590c" font-weight="bold">back-merge</text>
+  <text x="640" y="168" text-anchor="middle" font-size="12" fill="#e8590c">(don't forget!)</text>
+
+  <text x="420" y="28" text-anchor="middle" font-size="15" font-style="italic" fill="#495057">Merge the release back into dev, or the branches drift apart</text>
+</svg>

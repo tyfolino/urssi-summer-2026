@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 290" font-family="'Helvetica Neue', Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#868e96"/>
+    </marker>
+  </defs>
+
+  <text x="380" y="22" text-anchor="middle" font-size="16" font-style="italic" fill="#495057">Everyone commits straight to <tspan font-family="monospace" font-style="normal">main</tspan></text>
+
+  <!-- central repo -->
+  <rect x="275" y="40" width="210" height="74" rx="10" fill="#fff0f6" stroke="#e64980" stroke-width="2"/>
+  <text x="380" y="72" text-anchor="middle" font-size="18" font-weight="bold" fill="#a61e4d">Central repo</text>
+  <text x="380" y="95" text-anchor="middle" font-size="14" fill="#343a40" font-family="monospace">main</text>
+
+  <!-- devs -->
+  <g>
+    <rect x="40"  y="205" width="160" height="60" rx="10" fill="#e7f5ff" stroke="#1c7ed6" stroke-width="2"/>
+    <text x="120" y="242" text-anchor="middle" font-size="16" font-weight="bold" fill="#1864ab">You</text>
+    <rect x="300" y="205" width="160" height="60" rx="10" fill="#e7f5ff" stroke="#1c7ed6" stroke-width="2"/>
+    <text x="380" y="242" text-anchor="middle" font-size="16" font-weight="bold" fill="#1864ab">Dev B</text>
+    <rect x="560" y="205" width="160" height="60" rx="10" fill="#e7f5ff" stroke="#1c7ed6" stroke-width="2"/>
+    <text x="640" y="242" text-anchor="middle" font-size="16" font-weight="bold" fill="#1864ab">Dev C</text>
+  </g>
+
+  <!-- two-way arrows -->
+  <g stroke="#868e96" stroke-width="2.5" fill="none">
+    <line x1="150" y1="203" x2="320" y2="116" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+    <line x1="380" y1="203" x2="380" y2="116" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+    <line x1="610" y1="203" x2="440" y2="116" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  </g>
+  <text x="235" y="170" text-anchor="middle" font-size="12.5" fill="#868e96" font-family="monospace">pull / push</text>
+</svg>

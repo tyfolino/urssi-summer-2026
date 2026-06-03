@@ -56,24 +56,24 @@ feedback! They are invested and interested in what you're contributing.
 ---
 # Three perspectives
 
-.large[
-**maintainer** — keeps things running in a software project. Often focused less on new
-features and more on overall infrastructure and usability.
-]
+.center.width-60[![maintainer, contributor, and user around a pull request](figures/three-perspectives.svg)]
 
 .large[
-**contributor** — submits a PR, issue, or feedback. May be a first-timer or a regular.
-]
-
-.large[
-**user** — uses the code but doesn't contribute upstream. Think about how changes affect
-these people: they're usually *not* in the review thread.
+* **maintainer** — keeps the project running (infrastructure, usability, the long view)
+* **contributor** — submits the change; may be a first-timer or a regular
+* **user** — uses the code but isn't in the thread — yet your change still affects them
 ]
 
 ---
 # What is code review?
 
 .large[
+A structured back-and-forth to improve a change *before* it lands on `main`:
+]
+
+.center[![open PR, review and comment, revise, approve and merge cycle](figures/review-cycle.svg)]
+
+.footnote[
 I like [this description](https://about.gitlab.com/topics/version-control/what-is-code-review/) from GitLab.
 ]
 
@@ -168,6 +168,16 @@ The project we'll review already has the infrastructure from the previous slide:
 .footnote[
 Because the bots handle style and tests, the human review can focus on the *science* and
 the *API*.
+]
+
+---
+# Anatomy of a PR review on GitHub
+
+.center.width-70[![a GitHub PR showing files changed, an inline comment, a suggestion, and approve](figures/pr-anatomy.svg)]
+
+.footnote[
+The pieces you'll use live: the **Files changed** tab, **inline comments** on specific lines,
+a **Suggested change** (one click for the author to accept), and the **Approve** button.
 ]
 
 ---

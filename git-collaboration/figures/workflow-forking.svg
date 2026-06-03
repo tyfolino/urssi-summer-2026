@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 310" font-family="'Helvetica Neue', Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#868e96"/>
+    </marker>
+    <marker id="arrowlite" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#adb5bd"/>
+    </marker>
+  </defs>
+
+  <text x="390" y="22" text-anchor="middle" font-size="16" font-style="italic" fill="#495057">Each person owns a fork; changes come back via pull request</text>
+
+  <!-- upstream -->
+  <rect x="285" y="40" width="210" height="70" rx="10" fill="#fff0f6" stroke="#e64980" stroke-width="2"/>
+  <text x="390" y="72" text-anchor="middle" font-size="17" font-weight="bold" fill="#a61e4d">Upstream repo</text>
+  <text x="390" y="94" text-anchor="middle" font-size="13" fill="#343a40">(the "official" one)</text>
+
+  <!-- forks -->
+  <g>
+    <rect x="40"  y="215" width="180" height="58" rx="10" fill="#fff9db" stroke="#f08c00" stroke-width="2"/>
+    <text x="130" y="249" text-anchor="middle" font-size="15" font-weight="bold" fill="#e67700">your fork</text>
+    <rect x="300" y="215" width="180" height="58" rx="10" fill="#fff9db" stroke="#f08c00" stroke-width="2"/>
+    <text x="390" y="249" text-anchor="middle" font-size="15" font-weight="bold" fill="#e67700">fork B</text>
+    <rect x="560" y="215" width="180" height="58" rx="10" fill="#fff9db" stroke="#f08c00" stroke-width="2"/>
+    <text x="650" y="249" text-anchor="middle" font-size="15" font-weight="bold" fill="#e67700">fork C</text>
+  </g>
+
+  <!-- PR arrows fork -> upstream -->
+  <g stroke="#868e96" stroke-width="2.5" fill="none">
+    <line x1="135" y1="213" x2="320" y2="112" marker-end="url(#arrow)"/>
+    <line x1="390" y1="213" x2="390" y2="112" marker-end="url(#arrow)"/>
+    <line x1="645" y1="213" x2="460" y2="112" marker-end="url(#arrow)"/>
+  </g>
+  <!-- sync arrows upstream -> fork (dashed) -->
+  <g stroke="#adb5bd" stroke-width="1.8" fill="none" stroke-dasharray="5 4">
+    <line x1="300" y1="105" x2="150" y2="213" marker-end="url(#arrowlite)"/>
+    <line x1="480" y1="105" x2="630" y2="213" marker-end="url(#arrowlite)"/>
+  </g>
+  <text x="232" y="150" text-anchor="middle" font-size="13" fill="#1864ab" font-weight="bold">pull request</text>
+  <text x="585" y="150" text-anchor="middle" font-size="12" fill="#868e96" font-style="italic">sync</text>
+</svg>

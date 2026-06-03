@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 220" font-family="'Helvetica Neue', Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#868e96"/>
+    </marker>
+  </defs>
+
+  <g>
+    <rect x="10"  y="55" width="200" height="80" rx="10" fill="#e7f5ff" stroke="#1c7ed6" stroke-width="2"/>
+    <text x="110" y="90"  text-anchor="middle" font-size="18" font-weight="bold" fill="#1864ab">Working</text>
+    <text x="110" y="112" text-anchor="middle" font-size="18" font-weight="bold" fill="#1864ab">directory</text>
+
+    <rect x="270" y="55" width="200" height="80" rx="10" fill="#fff9db" stroke="#f08c00" stroke-width="2"/>
+    <text x="370" y="90"  text-anchor="middle" font-size="18" font-weight="bold" fill="#e67700">Staging area</text>
+    <text x="370" y="112" text-anchor="middle" font-size="14" fill="#343a40">(the "index")</text>
+
+    <rect x="530" y="55" width="200" height="80" rx="10" fill="#ebfbee" stroke="#2f9e44" stroke-width="2"/>
+    <text x="630" y="90"  text-anchor="middle" font-size="18" font-weight="bold" fill="#2b8a3e">Local repo</text>
+    <text x="630" y="112" text-anchor="middle" font-size="14" fill="#343a40">(.git history)</text>
+
+    <rect x="790" y="55" width="200" height="80" rx="10" fill="#fff0f6" stroke="#e64980" stroke-width="2"/>
+    <text x="890" y="90"  text-anchor="middle" font-size="18" font-weight="bold" fill="#a61e4d">Remote</text>
+    <text x="890" y="112" text-anchor="middle" font-size="14" fill="#343a40">(GitHub)</text>
+  </g>
+
+  <g stroke="#868e96" stroke-width="2.5" fill="none">
+    <line x1="212" y1="95" x2="268" y2="95" marker-end="url(#arrow)"/>
+    <line x1="472" y1="95" x2="528" y2="95" marker-end="url(#arrow)"/>
+    <line x1="732" y1="95" x2="788" y2="95" marker-end="url(#arrow)"/>
+  </g>
+
+  <g font-size="14" fill="#495057" text-anchor="middle" font-family="monospace">
+    <text x="240" y="48">git add</text>
+    <text x="500" y="48">git commit</text>
+    <text x="760" y="48">git push</text>
+  </g>
+
+  <!-- pull return arrow -->
+  <path d="M 890 135 C 890 195, 110 195, 110 137" stroke="#adb5bd" stroke-width="2" fill="none" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+  <text x="500" y="210" text-anchor="middle" font-size="13" fill="#868e96" font-family="monospace">git pull / git clone</text>
+</svg>

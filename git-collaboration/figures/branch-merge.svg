@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 250" font-family="'Helvetica Neue', Arial, sans-serif">
+  <!-- main branch line -->
+  <line x1="70" y1="80" x2="820" y2="80" stroke="#1c7ed6" stroke-width="3"/>
+  <!-- feature branch line -->
+  <line x1="250" y1="180" x2="560" y2="180" stroke="#2f9e44" stroke-width="3"/>
+  <!-- branch off and merge back -->
+  <path d="M 250 80 C 250 130, 250 130, 250 180" stroke="#2f9e44" stroke-width="3" fill="none"/>
+  <path d="M 560 180 C 640 180, 640 80, 640 80" stroke="#2f9e44" stroke-width="3" fill="none"/>
+
+  <!-- main commits -->
+  <g>
+    <circle cx="110" cy="80" r="16" fill="#4263eb"/>
+    <circle cx="250" cy="80" r="16" fill="#4263eb"/>
+    <circle cx="640" cy="80" r="18" fill="#e64980"/>
+    <circle cx="780" cy="80" r="16" fill="#4263eb"/>
+  </g>
+  <!-- feature commits -->
+  <g>
+    <circle cx="370" cy="180" r="16" fill="#2f9e44"/>
+    <circle cx="510" cy="180" r="16" fill="#2f9e44"/>
+  </g>
+
+  <!-- labels -->
+  <g font-size="16" font-family="'Helvetica Neue', Arial, sans-serif">
+    <text x="845" y="85" font-size="16" font-weight="bold" fill="#1864ab">main</text>
+    <text x="405" y="220" text-anchor="middle" font-size="16" font-weight="bold" fill="#2b8a3e">feature branch</text>
+    <text x="640" y="45" text-anchor="middle" font-size="13" fill="#a61e4d">merge commit</text>
+    <text x="250" y="45" text-anchor="middle" font-size="13" fill="#2b8a3e">branch off</text>
+  </g>
+</svg>

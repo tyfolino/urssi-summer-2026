@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 200" font-family="'Helvetica Neue', Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#868e96"/>
+    </marker>
+  </defs>
+
+  <!-- boxes -->
+  <g>
+    <rect x="10"  y="80" width="170" height="70" rx="10" fill="#e7f5ff" stroke="#1c7ed6" stroke-width="2"/>
+    <text x="95"  y="108" text-anchor="middle" font-size="18" fill="#1864ab" font-weight="bold">Your code</text>
+    <text x="95"  y="130" text-anchor="middle" font-size="15" fill="#343a40">src/mypackage/</text>
+
+    <rect x="285" y="80" width="170" height="70" rx="10" fill="#ebfbee" stroke="#2f9e44" stroke-width="2"/>
+    <text x="370" y="108" text-anchor="middle" font-size="18" fill="#2b8a3e" font-weight="bold">Distributions</text>
+    <text x="370" y="130" text-anchor="middle" font-size="15" fill="#343a40">wheel + sdist</text>
+
+    <rect x="560" y="80" width="170" height="70" rx="10" fill="#fff0f6" stroke="#e64980" stroke-width="2"/>
+    <text x="645" y="113" text-anchor="middle" font-size="18" fill="#a61e4d" font-weight="bold">PyPI</text>
+    <text x="645" y="134" text-anchor="middle" font-size="13" fill="#343a40">the package index</text>
+
+    <rect x="820" y="80" width="170" height="70" rx="10" fill="#fff9db" stroke="#f08c00" stroke-width="2"/>
+    <text x="905" y="108" text-anchor="middle" font-size="18" fill="#e67700" font-weight="bold">Anyone</text>
+    <text x="905" y="130" text-anchor="middle" font-size="15" fill="#343a40">pip install</text>
+  </g>
+
+  <!-- arrows -->
+  <g stroke="#868e96" stroke-width="2.5" fill="none">
+    <line x1="182" y1="115" x2="283" y2="115" marker-end="url(#arrow)"/>
+    <line x1="457" y1="115" x2="558" y2="115" marker-end="url(#arrow)"/>
+    <line x1="732" y1="115" x2="818" y2="115" marker-end="url(#arrow)"/>
+  </g>
+
+  <!-- arrow labels -->
+  <g font-size="15" fill="#495057" text-anchor="middle" font-style="italic">
+    <text x="232" y="105">build</text>
+    <text x="507" y="105">upload</text>
+    <text x="775" y="105">install</text>
+  </g>
+
+  <!-- captions under arrows -->
+  <g font-size="12.5" fill="#868e96" text-anchor="middle" font-family="monospace">
+    <text x="232" y="172">python -m build</text>
+    <text x="507" y="172">twine / uv publish</text>
+    <text x="775" y="172">pip install pkg</text>
+  </g>
+</svg>

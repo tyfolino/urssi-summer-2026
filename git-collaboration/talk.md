@@ -44,6 +44,54 @@ This material is adapted from [Madicken Munk](https://munkm.github.io/)'s lesson
 ---
 class: middle, center
 
+# First, a quick git refresher
+
+---
+# Git in one picture
+
+.large[
+**Git** records the history of your project — every saved version, who changed what, and why.
+Your changes move through a few "places":
+]
+
+.center[![working directory, staging area, local repo, and remote](figures/git-areas.svg)]
+
+.footnote[
+You **stage** the changes you want (`git add`), **commit** them as a snapshot
+(`git commit`), and **push** to share them (`git push`).
+]
+
+---
+# The everyday loop
+
+.large[
+99% of git, day to day, is this loop — over and over:
+]
+
+.center.width-80[![edit, add, commit, push loop](figures/commit-loop.svg)]
+
+.large[
+* a **commit** is a labeled snapshot of your project at a moment in time
+* a **branch** is just a movable label pointing at a commit
+* a **remote** is a copy of the repo on a server (like GitHub)
+]
+
+---
+# Branches & merging
+
+.large[
+A **branch** lets you work without disturbing `main`. When it's ready, you **merge** it back.
+]
+
+.center[![a feature branch off main, merged back in](figures/branch-merge.svg)]
+
+.footnote[
+This single picture is the heart of every workflow we're about to see.
+]
+
+---
+class: middle, center
+
 # Workflows with git
 
 ---
@@ -93,36 +141,27 @@ class: middle, center
 ---
 # Centralized workflow
 
-.large[All members work on the **same repository**.]
+.large[All members work on the **same repository**, committing to `main`.]
 
-<br>
-
-`git pull` before starting work
-
-Everyone commits to `main`
-
-`git push`
+.center.width-55[![centralized workflow: everyone pushes to one repo](figures/workflow-centralized.svg)]
 
 --
 
-If there is no merge conflict, 🙌
-
---
-
-Otherwise, fix the merge conflict, then push
+.large[
+`git pull` before you start · commit · `git push`. If there's a merge conflict, fix it,
+then push.
+]
 
 ---
 # Feature branching workflow
 
 .large[
-Members work on the same repository but use **individual branches** to do feature development.
+Members work on the same repository but use **individual branches** to develop features.
 ]
 
-1. Create and switch to a branch
-2. Add commits
-3. Push the feature branch to GitHub
-4. Open a pull request
-5. Discuss, add more commits, merge
+.center.width-55[![feature branching: each feature on its own branch, merged via PR](figures/workflow-feature.svg)]
+
+1. Create a branch → 2. Add commits → 3. Push it → 4. Open a pull request → 5. Discuss & merge
 
 ---
 # Feature branching workflow
@@ -165,6 +204,16 @@ instead be an **approving review** before the feature is merged.
 ]
 
 ---
+# The pull request lifecycle
+
+.center[![create branch, push, open PR, review and discuss, merge](figures/pr-lifecycle.svg)]
+
+.large[
+The PR is where **review** happens — comments, suggestions, and fixes — before anything
+lands on `main`. (That's tomorrow's whole session.)
+]
+
+---
 # Pull request tip
 
 .large[
@@ -187,15 +236,16 @@ co-develop a feature branch with a collaborator outside of `main`.
 # Forking workflow
 
 .large[
-Each collaborator **forks** a copy of the centralized repository. These forks are
-individual remote repositories. Collaborators submit pull requests **from their forks**
-to the centralized repository.
+Each collaborator **forks** their own copy of the repo. Changes come back via pull requests
+**from the fork** to the central repo.
 ]
 
-1. Everyone has a fork of a "central" repository
-2. Add commits to feature branches
-3. Push feature branches to your individual fork
-4. Send a pull request from the feature branch on your fork to the central repo
+.center.width-55[![forking: each person owns a fork, PRs to upstream](figures/workflow-forking.svg)]
+
+.large[
+You don't need write access to the central repo — this is how most **open-source**
+contributions work (including the ClimKern PR we'll review next session).
+]
 
 .footnote[
 This is the workflow most open-source contributions use — including the ClimKern PR
@@ -245,16 +295,15 @@ even when several PRs land at once.
 
 A common multi-branch setup: develop on `dev`, release from `main`.
 
-The trap: when you merge `dev → main` to cut a release, that merge commit lives **only on
-`main`**. If you never merge it back, `main` and `dev` drift apart — and tools that walk
-history (like `git describe` for versioning) can't see your release tags from `dev`.
+.center.width-65[![release merges to main; back-merge returns it to dev](figures/back-merge.svg)]
+
+The trap: the release merge commit lives **only on `main`**. If you never merge it back,
+`main` and `dev` drift apart — and tools like `git describe` can't see your tags from `dev`.
 
 --
 
-**The fix — pick one each release:**
-
-* fast-forward `main` to `dev` so they point at the *same* commit, or
-* after releasing, merge `main` back into `dev` (the classic "back-merge")
+**The fix — pick one each release:** fast-forward `main` to `dev`, or merge `main` back into
+`dev` (the classic "back-merge").
 
 .footnote[
 Real story: ClimKern's `v1.2.0` tag sat on `main` only, so `dev` thought the latest version

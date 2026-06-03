@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>URSSI Summer School 2026 — Ty Janoski's Talks</title>
+  <style>
+    :root { --accent: #1c7ed6; --ink: #212529; --muted: #868e96; --line: #e9ecef; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink); background: #f8f9fa; margin: 0;
+      line-height: 1.55;
+    }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 64px 24px 80px; }
+    header { margin-bottom: 40px; }
+    h1 { font-size: 2rem; margin: 0 0 6px; }
+    .sub { color: var(--muted); font-size: 1.05rem; margin: 0; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .card {
+      display: block; background: #fff; border: 1px solid var(--line);
+      border-radius: 12px; padding: 22px 24px; margin: 16px 0;
+      text-decoration: none; color: inherit;
+      transition: border-color .15s, transform .15s, box-shadow .15s;
+    }
+    .card:hover {
+      border-color: var(--accent); transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(28,126,214,.10); text-decoration: none;
+    }
+    .card .meta { color: var(--muted); font-size: .85rem; text-transform: uppercase; letter-spacing: .04em; }
+    .card h2 { margin: 4px 0 6px; font-size: 1.3rem; }
+    .card p { margin: 0; color: #495057; }
+    .card .go { color: var(--accent); font-weight: bold; font-size: .95rem; margin-top: 10px; display: inline-block; }
+
+    footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: .9rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>URSSI Research Software Development Summer School</h1>
+      <p class="sub">8–10 June 2026 · Boston, MA · Talks by <strong>Ty Janoski</strong> (Rutgers University)</p>
+    </header>
+
+    <main>
+      <a class="card" href="python-packaging/">
+        <div class="meta">June 8 · Day 1</div>
+        <h2>Structuring &amp; Distributing Python Packages</h2>
+        <p>Turn your analysis scripts into an installable, shareable, citable Python package.</p>
+        <span class="go">Open slides →</span>
+      </a>
+
+      <a class="card" href="git-collaboration/">
+        <div class="meta">June 8 · Day 1</div>
+        <h2>Collaboration with Git &amp; GitHub</h2>
+        <p>Working together with git: commits, branches, pull requests, forks, and clean release workflows.</p>
+        <span class="go">Open slides →</span>
+      </a>
+
+      <a class="card" href="peer-review/">
+        <div class="meta">June 9 · Day 2</div>
+        <h2>Peer Code Review</h2>
+        <p>How to give and receive good code review — demonstrated live on a real pull request.</p>
+        <span class="go">Open slides →</span>
+      </a>
+    </main>
+
+    <footer>
+      Part of the <a href="https://github.com/si2-urssi/summerschool-June2026">URSSI Summer School</a>.
+      Examples use <a href="https://github.com/tyfolino/climkern">ClimKern</a>.
+      Slides adapt earlier work by Matthew Feickert, Kyle Niemeyer, and Madicken Munk.
+    </footer>
+  </div>
+</body>
+</html>

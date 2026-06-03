@@ -27,14 +27,12 @@ June 8th, 2026
 ]
 .kol-1-2[
 .large[
-We'll use **ClimKern** as our running example throughout.
+**How this talk works:**
+
+We'll learn the mechanics on a tiny *generic* package you can copy to your own work...
+
+...and I'll point to my real package, **ClimKern**, to show what it looks like *in the wild*.
 ]
-
-<br>
-
-`pip install climkern`
-
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10291284.svg)](https://doi.org/10.5281/zenodo.10291284)
 ]
 
 .footnote[
@@ -69,40 +67,46 @@ catch-all `utils.py`:
 import sys
 from pathlib import Path
 
-# Make ./code/kernels.py visible to sys.path
+# Make ./code/stats.py visible to Python
 sys.path.insert(1, str(Path(__file__).parent / "code"))
-from kernels import calc_feedback   # our own helper
+from stats import mean   # our own helper function
 ```
 
-* This is *already better* than one massive file
-* But now things are tied to a relative path on **your** computer, and are brittle to
-  refactoring
+* This is *already better* than one giant file
+* But now things are tied to a relative path on **your** computer, and break the moment you
+  move or rename anything
 
-.large[We can do much better!]
+.large[We can do much better — by making our code a **package**.]
 
 ---
 # First, some vocabulary
 
 .large[
-* A **module** is a single `.py` file containing definitions (functions, classes, ...)
+* A **module** is a single `.py` file with definitions (functions, classes, ...)
 * A **package** is a directory of modules, marked by an `__init__.py`
-  - `__init__.py` controls what `import climkern` exposes
-* A **distribution** is the packaged-up artifact you install (`pip install climkern`)
+* A **distribution** is the bundled-up package you hand to `pip` (`pip install ...`)
 ]
 
 ```console
-climkern/             # the package
-├── __init__.py       # makes it a package; defines the public API
-├── frontend.py       # a module
-├── util.py           # a module
-└── tests/            # a subpackage
+mypackage/             # the project folder
+└── src/
+    └── mypackage/     # the package (importable)
+        ├── __init__.py   # makes it a package; defines the public API
+        ├── stats.py      # a module
+        └── helpers.py    # another module
 ```
+
+.footnote[
+"Package" gets used for both *the importable folder* and *the thing on PyPI*. Usually clear
+from context.
+]
 
 ---
 # Before packaging: manage your environment
 
 .large[
-Never install project dependencies into your system Python. **Isolate** each project.
+Never install project dependencies into your system Python. **Isolate** each project so its
+dependencies can't clash with another's.
 ]
 
 * `python -m venv .venv` + `pip` — built in, lightweight, pure-Python
@@ -110,17 +114,21 @@ Never install project dependencies into your system Python. **Isolate** each pro
 * `pipx` / `uvx` — for installing command-line *applications* in isolation
 
 .footnote[
-ClimKern *needs* conda — more on that when we get to the dependency reality slide.
+A **virtual environment** is just a self-contained folder with its own Python and packages.
+Activate it, and `pip install` only touches *that* project.
 ]
 
 ---
 # Next steps: packaging your code
 
 .huge[
-* The real emphasis: .bold[your code becomes installable]
-   - Anywhere your Python environment is active, you can `import climkern`
+* The real goal: .bold[your code becomes installable]
+   - Anywhere your environment is active, you can `import mypackage`
+   - No more `sys.path` hacks or "works on my machine"
+]
 
-* Following the Zen of Python, this should be straightforward, right?
+.large[
+Following the Zen of Python, this should be one obvious way, right?
 ]
 
 ```console
@@ -165,8 +173,8 @@ The .red[bad news]: Python packaging has expanded .bold[dramatically] in the las
 The .green[okay news]: you can probably default to the simplest thing
 ]
 
-* **pure Python**: [`setuptools`](https://setuptools.pypa.io/) (the classic default) or [`hatchling`](https://hatch.pypa.io/) (modern, lightweight)
-* **compiled extensions**: [`scikit-build-core`](https://scikit-build-core.readthedocs.io/) + [`pybind11`](https://github.com/pybind/pybind11)
+* **pure Python**: [`hatchling`](https://hatch.pypa.io/) (modern, lightweight) or [`setuptools`](https://setuptools.pypa.io/) (the classic default)
+* **compiled extensions** (C/C++/Fortran): [`scikit-build-core`](https://scikit-build-core.readthedocs.io/) + [`pybind11`](https://github.com/pybind/pybind11)
 
 .kol-1-2[
 <p style="text-align:center;">
@@ -186,39 +194,82 @@ The .green[okay news]: you can probably default to the simplest thing
 ]
 
 .footnote[
-ClimKern uses `setuptools` (+ `setuptools-scm` for versioning) — perfectly valid and still
-the most common backend you'll see.
+We'll use **`hatchling`** below — it's the simplest modern default. (ClimKern happens to use
+`setuptools`; both are perfectly valid.)
 ]
 
 ---
-# Simple packaging example: ClimKern's layout
+# First: what does "building" even mean?
+
+.large[
+**Building** = turning your human-readable source code into a tidy, installable bundle.
+]
+
+.center[![build pipeline: your code to pip install](figures/build-pipeline.svg)]
+
+.large[
+* a **wheel** (`.whl`) — a ready-to-install zip; `pip` just unzips it into place
+* an **sdist** (`.tar.gz`) — your source files; `pip` builds it on the user's machine
+]
+
+.footnote[
+You rarely build by hand for local work — `pip install .` does it for you. You build
+explicitly when you're ready to **publish**.
+]
+
+---
+# A clean project layout
 
 .huge[
-Modern ([PEP 518](https://peps.python.org/pep-0518/)) build backends need a single config
-file: [`pyproject.toml`](https://packaging.python.org/en/latest/guides/writing-pyproject-toml/)
+A modern package needs just **one** config file: [`pyproject.toml`](https://packaging.python.org/en/latest/guides/writing-pyproject-toml/).
 ]
 
 ```console
-$ tree climkern
-climkern
-├── pyproject.toml   # controls packaging + tool config (no setup.py needed!)
-├── README.md
-├── LICENSE
-├── CITATION.cff     # how to cite the software
-├── climkern
-│   ├── __init__.py  # the public API
-│   ├── __main__.py  # enables `python -m climkern ...`
-│   ├── frontend.py
-│   ├── download.py
-│   ├── util.py
-│   └── tests
-└── docs
+mypackage/
+├── pyproject.toml   # the one config file (packaging + tools)
+├── README.md        # what it is, how to use it
+├── LICENSE          # so others can legally reuse it
+└── src/
+    └── mypackage/
+        ├── __init__.py   # makes it a package
+        └── stats.py      # your actual code
 ```
 
 .footnote[
-This is a **flat** layout (package next to config). You'll also see a `src/` layout —
-both are fine; `src/` avoids accidentally importing from the working directory.<br>
-Modern `setuptools` builds from `pyproject.toml` alone — no `setup.py` shim required.
+This is a **`src/` layout** — the package lives under `src/`. Copy this skeleton for your
+own project and you're 90% of the way there.
+]
+
+---
+# Flat vs. `src/` layout
+
+.kol-1-2[
+**Flat layout**
+```console
+mypackage/
+├── pyproject.toml
+└── mypackage/
+    ├── __init__.py
+    └── stats.py
+```
+Package sits next to the config.
+]
+.kol-1-2[
+**`src/` layout**
+```console
+mypackage/
+├── pyproject.toml
+└── src/
+    └── mypackage/
+        ├── __init__.py
+        └── stats.py
+```
+Package tucked under `src/`.
+]
+
+.large[
+Both are valid! `src/` is a little safer: your tests import the **installed** package, not
+whatever happens to be in the current folder — so you catch "forgot to include a file" bugs.
 ]
 
 ---
@@ -228,158 +279,144 @@ Modern `setuptools` builds from `pyproject.toml` alone — no `setup.py` shim re
 > "TOML aims to be a .bold[minimal configuration file format] that's easy to read due to
 > obvious semantics. TOML is designed to map unambiguously to a hash table." — https://toml.io/
 
-TOML has become the standard for Python config and lock files: easy for **humans** to read
-and **machines** to parse.
+A plain text format of `key = value` settings grouped under `[section]` headers — easy for
+**humans** to read and **machines** to parse.
 ]
 
 ---
 # `pyproject.toml`: how it gets built
 
-.huge[Defining how your project should be .bold[built]:]
+.large[Two lines tell tools **how** to build your package:]
 
 ```toml
 [build-system]
-requires = ["setuptools>=77", "setuptools-scm>=8"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools_scm]   # version comes from your git tags
+requires = ["hatchling"]              # the build backend to install
+build-backend = "hatchling.build"     # ...and how to call it
 ```
 
+.large[
+* a **build backend** (here, `hatchling`) is the tool that *does* the building
+* a **build frontend** (like `pip` or `build`) is the tool *you run*, which calls the backend
+]
+
 .footnote[
-[`setuptools-scm`](https://setuptools-scm.readthedocs.io/) derives the version from your
-latest git tag: tag `v1.2.1`, and the build *is* `1.2.1` — no version string to bump by
-hand. (With `hatchling` you'd swap in `hatchling` / `hatch-vcs`.)
+You almost never interact with the backend directly — `pip` and `build` talk to it for you.
+Swap `hatchling` for `setuptools` and everything else below is identical.
 ]
 
 ---
-# `pyproject.toml`: metadata & requirements
+# Project metadata: who & what
 
-.huge[Defining project .bold[metadata and dependencies]:]
+.large[Now the `[project]` table. Start with the **basics** — who made it and what it is:]
 
 ```toml
 [project]
-name = "climkern"
-dynamic = ["version"]            # set by setuptools-scm from git tags
-description = "Easily compute climate feedbacks with radiative kernels."
-license = "MIT"                  # SPDX expression (PEP 639)
-authors = [
-    {name = "Ty Janoski", email = "tyfolino@gmail.com"},
-]
-requires-python = ">= 3.9"
+name = "mypackage"
+version = "0.1.0"
+description = "A tiny example package."
 readme = "README.md"
-dependencies = [
-    "xarray>=0.16.2",
-    "cf-xarray>=0.5.1",
-    "xesmf>=0.7.1",
-    "pooch",
-    "plac",
-    "netCDF4",
-    # ...
+license = "MIT"
+authors = [
+    {name = "Your Name", email = "you@example.com"},
 ]
 ```
 
----
-# `pyproject.toml`: optional dependencies
+.footnote[
+`license = "MIT"` is an [SPDX identifier](https://spdx.org/licenses/) — a standard short
+code for a license (the modern way, since PEP 639).
+]
 
-.huge[Extra dependencies users opt into:]
+---
+# Project metadata: what it needs to run
+
+.large[Next, the package's **runtime needs**:]
+
+```toml
+requires-python = ">=3.9"
+
+dependencies = [        # installed automatically with your package
+    "numpy",
+    "pandas>=2.0",
+]
+```
+
+--
+
+.large[**Optional** dependencies ("extras") users opt into:]
 
 ```toml
 [project.optional-dependencies]
-test = ["pytest>=7,<8"]
-lint = ["pre-commit>=2.20.0"]
-```
-
-```console
-$ pip install "climkern[test]"   # install climkern + its test deps
+test = ["pytest"]       #  ->  pip install "mypackage[test]"
 ```
 
 .footnote[
-.blue[2026 note:] there's now a *standard* way to declare dev-only dependencies that
-**aren't** published as installable extras — `[dependency-groups]` (PEP 735). More later.
+Pin loosely (`>=`) for a **library** so it plays nicely with others' projects.
 ]
 
 ---
-# `pyproject.toml`: tooling config
+# Project metadata: how people find it
 
-.huge[Configuring .bold[tools] in one place:]
+.large[Finally, **discovery** metadata — this is what fills out your PyPI page:]
 
 ```toml
-[tool.ruff]
-line-length = 88
-target-version = "py311"
-extend-select = ["E", "F", "D", "I001", "UP", "N", "B", "RUF"]
+keywords = ["statistics", "research", "example"]
 
-[tool.black]
-line-length = 88
-target-version = ["py39", "py310", "py311", "py312"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+]
+
+[project.urls]
+Homepage = "https://github.com/you/mypackage"
+Issues = "https://github.com/you/mypackage/issues"
 ```
 
 .footnote[
-One file configures your **linter** (ruff), **formatter** (black), test runner, type
-checker, and more — instead of a `.cfg` / `.ini` per tool.
+**Classifiers** are standard tags ([full list](https://pypi.org/classifiers/)); **URLs**
+become the handy links in the sidebar on PyPI.
 ]
 
 ---
-# I modernized ClimKern for this release
+# `pyproject.toml`: configuring your tools
 
-.large[
-Presenting a *real* package means you get to watch it evolve. Here's what I actually
-changed going into **v1.2.1** (all real commits you can see on GitHub):
-]
+.large[The same file configures your **dev tools** — no more one `.cfg` per tool:]
 
-| Before (v1.2) | After (v1.2.1) |
-|:--|:--|
-| `setup.py` shim | gone — `pyproject.toml` only |
-| `version = "1.2"` (hardcoded) | `dynamic` — from git tags via `setuptools-scm` |
-| no `license` field | `license = "MIT"` (SPDX, PEP 639) |
-| no classifiers / URLs | full PyPI **discovery metadata** added |
-| `precommit` typo in `lint` extra | fixed to `pre-commit` |
+```toml
+[tool.ruff]            # linter (catches bugs / style issues)
+line-length = 88
+
+[tool.pytest.ini_options]   # test runner
+testpaths = ["tests"]
+```
 
 .footnote[
-None of this was a rewrite — packaging best practices are a moving target, and catching up
-is normal maintenance. Classifiers and URLs are what populate your PyPI page.
+One file for packaging **and** your linter, formatter, test runner, type checker... it's the
+center of a modern Python project.
 ]
-
----
-# Essential files beyond the code
-
-.large[
-A package is more than `.py` files. Reviewers and users look for:
-]
-
-* **README** — what it is, how to install, a usage example, license *(ClimKern ✓)*
-* **LICENSE** — without one, others legally can't reuse it *(ClimKern ✓ — MIT)*
-* **CHANGELOG** — human-readable version history (semantic versioning)
-* **CONTRIBUTING** — how to set up a dev environment and submit changes
-* **CODE_OF_CONDUCT** — expectations for the community
-* **CITATION.cff** — how to cite the software *(ClimKern ✓ — more soon)*
 
 ---
 # Installing your code
 
-You can **locally install** your package into your environment:
+.large[With `pyproject.toml` in place, install your package into your environment:]
 
 ```console
-$ cd climkern
+$ cd mypackage
 $ python -m pip install .
-Successfully built climkern
-Installing collected packages: climkern
-Successfully installed climkern-1.2
+Successfully built mypackage
+Successfully installed mypackage-0.1.0
 ```
 
-...or, since ClimKern is published, anyone can just:
-
-```console
-$ pip install climkern
-```
-
-and then `import climkern` anywhere their environment is active.
+.large[
+Now `import mypackage` works **anywhere** your environment is active — no `sys.path`,
+no relative paths. 🎉
+]
 
 ---
-# Packaging doesn't slow down development
+# Packaging doesn't slow you down: editable installs
 
 .huge[
-Build backends support "[editable installs](https://pip.pypa.io/en/latest/topics/local-project-installs/#editable-installs)":
+Use an **[editable install](https://pip.pypa.io/en/latest/topics/local-project-installs/#editable-installs)** while developing:
 ]
 
 ```console
@@ -387,44 +424,65 @@ $ python -m pip install --editable .
 ```
 
 .large[
-Editable installs add your development files to Python's import path. You can **develop**
-your code and have **immediate** access to changes — no reinstall needed (unless you change
-project metadata).
+This links your source folder into the environment, so **edits take effect immediately** —
+no reinstall needed (unless you change `pyproject.toml`).
+
+Develop your code and use it at the same time.
 ]
 
 ---
-# Entry points: `python -m climkern`
+# Console commands with `[project.scripts]`
 
 .large[
-ClimKern's kernels live on Zenodo (too big for PyPI). A `__main__.py` lets users run the
-downloader as a command:
+Want your package to provide a **terminal command**? Point an entry point at a function:
 ]
 
-```python
-# climkern/__main__.py
-if __name__ == "__main__":
-    import sys, plac
-    from .download import download
-
-    commands = {"download": download}
-    command = sys.argv.pop(1)
-    plac.call(commands[command], sys.argv[1:])
+```toml
+[project.scripts]
+mypackage = "mypackage.cli:main"   # runs mypackage.cli.main()
 ```
 
 ```console
-$ python -m climkern download   # fetch the kernel datasets
+$ mypackage --help        # now available on your PATH
 ```
 
 .footnote[
-You can also expose true console commands via `[project.scripts]`, e.g. a `climkern`
-executable on the user's `PATH`.
+.blue[In the wild:] ClimKern ships a `__main__.py` so users run
+`python -m climkern download` to fetch its (multi-GB) data files from Zenodo.
+]
+
+---
+class: middle, center
+
+# Meet a real package: ClimKern
+
+### the same ideas, in the wild
+
+---
+# A real package levels up: ClimKern v1.2.1
+
+.large[
+ClimKern is a real, published package — and watching it evolve shows these ideas in action.
+Here's what I changed for its latest release:
+]
+
+| Before | After |
+|:--|:--|
+| `setup.py` shim | gone — `pyproject.toml` only |
+| `version = "1.2"` (hardcoded) | **dynamic** — read from git tags via `setuptools-scm` |
+| no `license` field | `license = "MIT"` (SPDX) |
+| no classifiers / URLs | full PyPI **discovery metadata** |
+
+.footnote[
+"Dynamic version" = the version comes from your `git tag` instead of being typed into the
+file. None of this was a rewrite — just normal maintenance as best practices move.
 ]
 
 ---
 # Don't forget the tests
 
 .large[
-Because ClimKern is installed as a package, its tests ship with it and run anywhere:
+Because a package is installed, its tests ship with it and run anywhere:
 ]
 
 ```console
@@ -441,11 +499,11 @@ fits — which is exactly what frees up human code review (tomorrow's session!).
 # The dependency reality: not everything `pip`-installs
 
 .large[
-ClimKern regrids kernels with [**ESMPy**](https://earthsystemmodeling.org/esmpy/), which
-wraps a compiled Fortran/C++ library and is **not available on PyPI**.
+ClimKern regrids data with [**ESMPy**](https://earthsystemmodeling.org/esmpy/), which wraps
+a compiled Fortran/C++ library and is **not on PyPI**.
 ]
 
-So ClimKern's install instructions start with conda:
+So its install instructions start with conda:
 
 ```console
 $ conda create -n ck_env python=3.11 esmpy -c conda-forge
@@ -454,8 +512,7 @@ $ pip install climkern
 ```
 
 .large[
-This is extremely common in scientific Python — and it's why we need to talk about
-**conda-forge**.
+This is extremely common in scientific Python — and it's why we need **conda-forge**.
 ]
 
 ---
@@ -466,14 +523,13 @@ The `conda` family ([`conda`](https://docs.conda.io/), [`mamba`](https://mamba.r
 [`pixi`](https://prefix.dev/docs/pixi/)) are **general-purpose** package managers.
 
 Instead of only Python packages, they install **all** dependencies (including Python and
-compiled libraries) as OS- and architecture-specific **built binaries** hosted on
-conda-forge.
+compiled libraries) as OS- and architecture-specific **prebuilt binaries**.
 ]
 
 * Popular in scientific computing because arbitrary binaries can be hosted — compilers,
   Fortran, even the full NVIDIA CUDA stack
-* The trade-off: with binaries only, if there's no matching build, there's no automatic
-  fallback to building from source (unlike `pip` + sdists)
+* The trade-off: if there's no matching prebuilt binary, there's no automatic fallback to
+  building from source (unlike `pip` + an sdist)
 
 ---
 # Going further: distributing via Git
@@ -484,10 +540,10 @@ If your code is in a public Git repo, you've already done a version of distribut
 
 ```console
 # Works for pure-Python packages
-$ python -m pip install "git+https://github.com/tyfolino/climkern.git"
+$ python -m pip install "git+https://github.com/you/mypackage.git"
 
-# General pattern
-$ python -m pip install "pkg @ git+https://example.com/repo.git@branch"
+# General pattern (a specific branch, even)
+$ python -m pip install "mypackage @ git+https://example.com/repo.git@branch"
 ```
 
 .large[Great for trying a branch or an unreleased fix — but for users we want something tidier.]
@@ -496,59 +552,58 @@ $ python -m pip install "pkg @ git+https://example.com/repo.git@branch"
 # Building distributions: sdist & wheel
 
 .large[
-`pip` installs two kinds of **distributions**:
+When you're ready to publish, **build** the two distribution files:
 ]
-
-* **[sdist](https://packaging.python.org/en/latest/glossary/#term-Source-Distribution-or-sdist)** — a `.tar.gz` of your source files
-* **[wheel](https://packaging.python.org/en/latest/glossary/#term-Built-Distribution)** — a `.whl` zip of the built files + metadata (no code execution to install)
 
 ```console
 $ python -m pip install --upgrade build
-$ python -m build .
-Successfully built climkern-1.2.tar.gz and climkern-1.2-py3-none-any.whl
+$ python -m build
+Successfully built mypackage-0.1.0.tar.gz and mypackage-0.1.0-py3-none-any.whl
 $ ls dist
-climkern-1.2-py3-none-any.whl  climkern-1.2.tar.gz
+mypackage-0.1.0-py3-none-any.whl   mypackage-0.1.0.tar.gz
 ```
+
+* the **`.whl`** is the wheel (ready to install)
+* the **`.tar.gz`** is the sdist (source)
 
 ---
 # Uploading to a package index (PyPI)
 
 .large[
 Upload the files in `./dist/` to the [Python Package Index (PyPI)](https://pypi.org/) —
-`pip`'s default index.
+`pip`'s default index — and now *anyone* can `pip install mypackage`.
 ]
 
 <p style="text-align:center;">
    <a href="https://pypi.org/project/climkern/">
-      <img src="figures/pypi-page.png" width=45%>
+      <img src="figures/pypi-page.png" width=42%>
    </a>
 </p>
 
 .footnote[
-Historically you'd use `twine upload`. In 2026 there's a better way — see the
-"What's new" section.
+Historically you'd run `twine upload`. In 2026 there's a better way — see "What's new".
 ]
 
 ---
 # Reproducibility: lock files
 
 .large[
-Your *library* (`climkern`) should support a **range** of dependency versions
-(reusable). But a specific *analysis* you want to reproduce exactly needs a **lock file**:
-a hash-level record of every dependency.
+A **library** should support a **range** of dependency versions (reusable). But an
+*analysis* you want to reproduce exactly needs a **lock file**: a hash-level record of every
+dependency, pinned.
 ]
 
 * For `pip`: [`pip-tools`](https://pip-tools.readthedocs.io/), [`uv`](https://docs.astral.sh/uv/)
 * For the `conda` family: [`conda-lock`](https://conda.github.io/conda-lock/), [`pixi`](https://prefix.dev/docs/pixi/)
 
-Keep the lock file in version control alongside the analysis.
+.large[Keep the lock file in version control alongside the analysis.]
 
 ---
 # Aside: compiled extensions
 
 .large[
-ClimKern is pure Python, but many scientific packages ship C/C++/Fortran. With modern
-tooling that's only a little extra work:
+`mypackage` and ClimKern are pure Python, but many scientific packages ship C/C++/Fortran.
+With modern tooling that's only a little extra work:
 ]
 
 * Swap the build backend to [`scikit-build-core`](https://scikit-build-core.readthedocs.io/) + [`pybind11`](https://github.com/pybind/pybind11)
@@ -556,7 +611,7 @@ tooling that's only a little extra work:
 * conda-forge (or wheels with bundled binaries) handles distribution
 
 .footnote[
-If/when you need this, the [Scientific Python guide](https://learn.scientific-python.org/development/)
+When you need this, the [Scientific Python guide](https://learn.scientific-python.org/development/)
 walks through it end to end.
 ]
 
@@ -583,7 +638,7 @@ Tag a release → Zenodo mints a DOI → put it in your README and papers.
 
 .large[
 A [`CITATION.cff`](https://citation-file-format.github.io/) file tells GitHub (and humans)
-exactly how to cite your software. GitHub shows a "Cite this repository" button.
+exactly how to cite your software. GitHub adds a "Cite this repository" button.
 ]
 
 ```yaml
@@ -599,16 +654,30 @@ contributors:                    # credit the people who helped!
   - family-names: "Linke"
     given-names: "Olivia"
     orcid: "0000-0002-5286-2185"
-preferred-citation:
-  type: article
-  journal: "Geoscientific Model Development"
-  year: 2025
-  doi: "10.5194/gmd-18-3065-2025"
 ```
 
 .footnote[
 Software citation gets its own session on Day 3. Note the **contributors** block — when
 someone lands a PR, add them here so they get credit beyond the commit log.
+]
+
+---
+# Essential files beyond the code
+
+.large[
+A package is more than `.py` files. Reviewers and users look for:
+]
+
+* **README** — what it is, how to install, a usage example
+* **LICENSE** — without one, others legally can't reuse it
+* **CHANGELOG** — human-readable version history (semantic versioning)
+* **CONTRIBUTING** — how to set up a dev environment and submit changes
+* **CODE_OF_CONDUCT** — expectations for the community
+* **CITATION.cff** — how to cite the software
+
+.footnote[
+You don't need all of these on day one — but a README and a LICENSE are the bare minimum to
+share your work.
 ]
 
 ---
@@ -628,8 +697,8 @@ that has reshaped Python packaging since 2024 — it's *fast* and covers the who
 
 ```console
 $ uv venv                     # create a virtual environment
-$ uv pip install climkern     # a drop-in, much faster pip
-$ uv add xarray               # add a dependency to pyproject.toml + lock
+$ uv pip install mypackage    # a drop-in, much faster pip
+$ uv add numpy                # add a dependency to pyproject.toml + lock
 $ uv lock                     # write a universal lock file (uv.lock)
 $ uv run pytest               # run in the project env, auto-synced
 $ uv build                    # build sdist + wheel
@@ -723,13 +792,14 @@ RSEs make that easier and are *super* knowledgeable.
 # Summary
 
 .large[
-* We lifted a real analysis (ClimKern) from scripts → an installable, tested, **citable** package
-* Packaging is not a hopeless bog — it's community infrastructure built by people you can
-  collaborate with
-* `pyproject.toml` is the one file at the center of it all
+* A **package** makes your code installable, importable, and shareable — no more `sys.path`
+* `pyproject.toml` is the one file at the center of it all: build backend, metadata, tools
+* **Build** → wheel/sdist → **PyPI** → anyone can `pip install` it
+* Real packages (like ClimKern) add tests, a license, a DOI, and citation info on top
 * In 2026: `uv`, SPDX licenses, standardized lock files, and Trusted Publishing make it smoother than ever
-* Reusable code can be a nucleation point for a community
 ]
+
+.center.large.bold[Copy the `mypackage` skeleton and you've already started.]
 
 ---
 # References
@@ -740,7 +810,7 @@ RSEs make that easier and are *super* knowledgeable.
 3. [PyPA Packaging Python Projects Tutorial](https://packaging.python.org/en/latest/tutorials/packaging-projects/)
 4. [Scientific Python Library Development Guide](https://learn.scientific-python.org/development/)
 5. [`uv` documentation](https://docs.astral.sh/uv/)
-6. [ClimKern](https://github.com/tyfolino/climkern) (the running example)
+6. [ClimKern](https://github.com/tyfolino/climkern) (the real-world example)
 ]
 
 ---
@@ -749,4 +819,4 @@ count: false
 
 # The end.
 
-`pip install climkern` · [github.com/tyfolino/climkern](https://github.com/tyfolino/climkern)
+Copy the skeleton · `pip install mypackage` · build · publish 🚀
