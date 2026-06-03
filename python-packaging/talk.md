@@ -1,810 +1,751 @@
 class: middle, center, title-slide
 count: false
 
-# Distributing your Science:<br> Turning analyses into scientific tools
-.large.blue[Matthew Feickert]<br>
-.large[(University of Wisconsin-Madison)]
+# Structuring & Distributing Python Packages:<br> Turning analyses into scientific tools
+
+.large.blue[Ty Janoski]<br>
+.large[(Rutgers University)]
 <br>
-[matthew.feickert@cern.ch](mailto:matthew.feickert@cern.ch)
+[tyler.janoski@rutgers.edu](mailto:tyler.janoski@rutgers.edu)
 <br>
 
-[URSSI Summer School on Research Software and Open Science](https://github.com/si2-urssi/summerschool-July2024)
+[URSSI Summer School on Research Software Development](https://github.com/si2-urssi/summerschool-June2026)
 
-July 29th, 2024
+June 8th, 2026
 
 ---
 # My motivations on this topic
 
 .kol-1-2[
 .large[
-* Research scientist in high energy physics and data science at University of Wisconsin-Madison Data Science Institute
-* Analysis Systems area lead for IRIS-HEP
-* Member of ATLAS collaboration
-* Administrator of Scikit-HEP community organization
-* Community member of the Scientific Python project
-* Care about .bold[reusable] open science to be able to push physics forward at the .bold[community scale]
+* Climate scientist — I study climate feedbacks and radiative transfer
+* Author of [**ClimKern**](https://github.com/tyfolino/climkern), a Python package for
+  computing radiative feedbacks with climate-model kernels
+* Started as analysis scripts in 2022; now a published, citable tool used by other groups
+* I care about **reusable** open science so we can build on each other's work
 ]
 ]
 .kol-1-2[
-.center.width-65[[![logo_IRIS-HEP](assets/logos/logo_institution.png)](https://datascience.wisc.edu/institute/)]
-
-.center.width-30[[![logo_IRIS-HEP](assets/logos/logo_IRIS-HEP.png)](https://iris-hep.org/)]
-
-.center.width-40[[![logo_ATLAS](assets/logos/logo_ATLAS.png)](https://atlas.cern/)]
-
-.center.width-30[[![logo_ATLAS](figures/scikit-hep-logo.svg)](https://scikit-hep.org/)]
+.large[
+We'll use **ClimKern** as our running example throughout —
+warts and all, it's a *real* research package, not a toy.
 ]
-
----
-# Knowledgeable colleagues
 
 <br>
 
-.grid[
-.kol-1-2.center[
-<!-- https://avatars.githubusercontent.com/u/4616906?v=4 -->
-.circle.width-55[![Henry](figures/collaborators/schreiner.png)]
+`pip install climkern`
 
-[Henry Schreiner](http://iscinumpy.dev/)
-
-Princeton University, IRIS-HEP, PyPA, Scikit-Build
-]
-.kol-1-2.center[
-<!-- https://avatars.githubusercontent.com/u/1248413?v=4 -->
-.circle.width-50[![Angus](figures/collaborators/hollands.jpg)]
-
-[Angus Hollands](https://github.com/agoose77)
-
-2i2c, The Executable Books Project, MyST
-]
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14743210.svg)](https://doi.org/10.5281/zenodo.14743210)
 ]
 
-.center[Most of what we will discuss today has been covered extensively by them]
+.footnote[
+Adapted, with thanks, from [Matthew Feickert](https://www.matthewfeickert.com/)'s 2024
+URSSI talk and [Kyle Niemeyer](https://kyleniemeyer.github.io/research-software-dev-modules/module-packaging/)'s packaging module.
+]
 
 ---
-# Hypothetical workflow for the typical scientist
+# The hypothetical workflow of a typical scientist
 
-<!-- TODO: Spread this out across multiple slides with images -->
-
-.huge[
-1. Work on idea for paper with collaborators
-2. Do exploratory analysis in scripts and Jupyter ecosystem
-3. As research progresses need to write more complicated functions and workflows
-4. Code begins to sprawl across multiple directories
-5. Software dependencies begin to become more complicated
-6. The code "works on my machine", but what about your collaborators?
+.large[
+1. Work on an idea for a paper with collaborators
+2. Do exploratory analysis in scripts and the Jupyter ecosystem
+3. As the research progresses, you write more complicated functions and workflows
+4. Code begins to **sprawl** across multiple directories
+5. Software dependencies become more complicated
+6. The code "works on my machine" — but what about your collaborators?
 ]
 
-.center.huge.bold[People heroically press forward, but this is painful, and not reusable]
+.center.large.bold[People heroically press forward, but this is painful, and not reusable.]
 
 ---
 # Reusable science, step by step
 
 .large[
-In this first scenario, you will probably see a lot of `sys.path` manipulation and `utils.py`
+In this first scenario you'll probably see a lot of `sys.path` manipulation and a
+catch-all `utils.py`:
 ]
 
-.huge[
-```
-$ tree examples/edit_sys_path
-examples/edit_sys_path
-├── code
-│   └── utils.py  # helper functions rosen, rosen_der
-├── example.py  # want to import rosen, rosen_der
-└── jupytext.toml
-
-1 directory, 3 files
-```
-]
-
----
-# Reusable science, step by step
-
-.large[
-In this first scenario, you will probably see a lot of `sys.path` manipulation and `utils.py`
-]
-
-.large[
 ```python
-# example.py
+# analysis.py
 import sys
 from pathlib import Path
 
-# Make ./code/utils.py visible to sys.path
-# sys.path[1] should be after cwd and before virtual environment
+# Make ./code/kernels.py visible to sys.path
 sys.path.insert(1, str(Path(__file__).parent / "code"))
-from utils import rosen, rosen_der
-
-x0 = np.array([1.3, 0.7, 0.8, 1.9, 1.2])
-result = minimize(rosen, x0, method="BFGS",
-                  jac=rosen_der, options={"disp": True})
-optimized_params = result.x
-# array([1.00000004, 1.0000001 , 1.00000021, 1.00000044, 1.00000092])
+from kernels import calc_feedback   # our own helper
 ```
-]
+
+* This is *already better* than one massive file
+* But now things are tied to a relative path on **your** computer, and are brittle to
+  refactoring
+
+.large[We can do much better!]
 
 ---
-# Reusable science, step by step
+# First, some vocabulary
 
 .large[
-In this first scenario, you will probably see a lot of `sys.path` manipulation and `utils.py`
+* A **module** is a single `.py` file containing definitions (functions, classes, ...)
+* A **package** is a directory of modules, marked by an `__init__.py`
+  - `__init__.py` controls what `import climkern` exposes
+* A **distribution** is the packaged-up artifact you install (`pip install climkern`)
+]
 
-* This is _already better_ than having everything in a single massive file
-* However, now things are tied to this relative path on your computer
-
-```python
-# Make ./code/utils.py visible to sys.path
-sys.path.insert(1, str(Path(__file__).parent / "code"))
-from utils import rosen, rosen_der
+```console
+climkern/             # the package
+├── __init__.py       # makes it a package; defines the public API
+├── frontend.py       # a module
+├── util.py           # a module
+└── tests/            # a subpackage
 ```
 
-and are brittle to refactoring and change
+---
+# Before packaging: manage your environment
 
-* But we can do much better!
+.large[
+Never install project dependencies into your system Python. **Isolate** each project.
+]
+
+* `python -m venv .venv` + `pip` — built in, lightweight, pure-Python
+* `conda` / `mamba` — needed when dependencies aren't pure Python (compilers, C libraries)
+* `pipx` / `uvx` — for installing command-line *applications* in isolation
+
+.footnote[
+ClimKern *needs* conda — more on that when we get to the dependency reality slide.
 ]
 
 ---
-# Next steps: Packaging your code
+# Next steps: packaging your code
 
 .huge[
-* Real emphasis is just that .bold[your code is now installable]
-   - Anywhere your Python virtual environment is active you can use your code
+* The real emphasis: .bold[your code becomes installable]
+   - Anywhere your Python environment is active, you can `import climkern`
 
-* So following The Zen of Python this should be very straightforward?
+* Following the Zen of Python, this should be straightforward, right?
 ]
-.large[
-```
+
+```console
 $ python -c 'import this' | grep obvious
 There should be one-- and preferably only one --obvious way to do it.
-Although that way may not be obvious at first unless you're Dutch.
 ```
-]
 
 ---
-# Next steps: Packaging your code
+# Next steps: packaging your code
 
-.huge[
-Maybe not so much. :(
-]
+.huge[Maybe not so much. :(]
 
-<!-- Centering wasn't working without HTML -->
 <p style="text-align:center;">
    <a href="https://github.com/scientific-python/cookie">
-      <img src="figures/cookie-backend-options.png"/; width=50%>
+      <img src="figures/cookie-backend-options.png" width=50%>
    </a>
 </p>
 
-.center.huge[
-You might be asking: Why is there more than one thing?
-]
+.center.huge[You might be asking: why is there more than one?]
 
 ---
-# Next steps: Packaging your code
+# Next steps: packaging your code
 
 .huge[
-The .blue[good news]: Python packaging has improved .bold[dramatically] in the last 5 years
+The .blue[good news]: Python packaging has improved .bold[dramatically] in the last ~6 years
 ]
 
-* It has never been easier to just point your package manager to some code locally, or on the internet, and get working Python code installed and running on your machine regardless of operating system or architecture
-* This is a small .bold[miracle]
+* It has never been easier to point a package manager at some code — locally or on the
+  internet — and get working Python installed regardless of OS or architecture. A small **miracle**.
 
 .huge[
-The .red[bad news]: Python packaging has expanded .bold[dramatically] in the last 5 years
+The .red[bad news]: Python packaging has expanded .bold[dramatically] in the last ~6 years
 ]
 
-* By creating standards the PyPA allowed for an ecosystem of packaging backends to be created to tackle various problems (this is good!)
-* This means that our The Zen of Python expectations are violated and we need to make design choices (hard for beginners)
+* By creating standards, the PyPA enabled an ecosystem of **build backends** (good!)
+* ...which means we now have to make a design choice (hard for beginners)
 
 ---
-# Next steps: Packaging your code
+# Next steps: packaging your code
 
 .huge[
-The .green[okay news]: You can probably default to the simplest thing
+The .green[okay news]: you can probably default to the simplest thing
 ]
 
-* pure Python: Probably [`hatch`](https://github.com/ofek/hatch)
-* compiled extensions: Probably [`setuptools` + `pybind11`](https://pybind11.readthedocs.io/) or [`scikit-build-core`](https://scikit-build-core.readthedocs.io/) + [`pybind11`](https://github.com/pybind/pybind11)
+* **pure Python**: [`setuptools`](https://setuptools.pypa.io/) (the classic default) or [`hatchling`](https://hatch.pypa.io/) (modern, lightweight)
+* **compiled extensions**: [`scikit-build-core`](https://scikit-build-core.readthedocs.io/) + [`pybind11`](https://github.com/pybind/pybind11)
 
 .kol-1-2[
-<br>
 <p style="text-align:center;">
    <a href="https://packaging.python.org/en/latest/tutorials/packaging-projects/">
-      <img src="figures/pypa-packaging-tutorial.png"; width=100%>
+      <img src="figures/pypa-packaging-tutorial.png" width=100%>
    </a>
 </p>
-
-.caption[[Python Packaging User Guide, Packaging Python Projects Tutorial](https://packaging.python.org/en/latest/tutorials/packaging-projects/)]
+.caption[[PyPA Packaging Projects Tutorial](https://packaging.python.org/en/latest/tutorials/packaging-projects/)]
 ]
 .kol-1-2[
 <p style="text-align:center;">
    <a href="https://learn.scientific-python.org/development/guides/packaging-simple/">
-      <img src="figures/scientific-python-packaging.png"; width=100%>
+      <img src="figures/scientific-python-packaging.png" width=100%>
    </a>
 </p>
+.caption[[Scientific Python Development Guide](https://learn.scientific-python.org/development/)]
+]
 
-.caption[[Scientific Python Library Development Guide](https://learn.scientific-python.org/development/)]
+.footnote[
+ClimKern uses `setuptools` — perfectly valid and still the most common backend you'll see.
 ]
 
 ---
-# Simple packaging example
+# Simple packaging example: ClimKern's layout
 
-.huge[Modern [PEP 518](https://peps.python.org/pep-0518/) compliant build backends just need a single file: [`pyproject.toml`](https://packaging.python.org/en/latest/guides/writing-pyproject-toml/)]
+.huge[
+Modern ([PEP 518](https://peps.python.org/pep-0518/)) build backends need a single config
+file: [`pyproject.toml`](https://packaging.python.org/en/latest/guides/writing-pyproject-toml/)
+]
 
-```
-$ tree examples/simple_packaging
-examples/simple_packaging
-├── LICENSE
-├── pyproject.toml  # controls packaging and interactions with tools
+```console
+$ tree climkern
+climkern
+├── pyproject.toml   # controls packaging + tool config
+├── setup.py         # tiny shim for setuptools
 ├── README.md
-├── src
-│   └── rosen
-│       ├── example.py
-│       ├── __init__.py
-│       └── _version.py
-└── tests
-    └── test_example.py
-
-3 directories, 7 files
+├── LICENSE
+├── CITATION.cff     # how to cite the software
+├── climkern
+│   ├── __init__.py  # the public API
+│   ├── __main__.py  # enables `python -m climkern ...`
+│   ├── frontend.py
+│   ├── download.py
+│   ├── util.py
+│   └── tests
+└── docs
 ```
 
----
-# Simple packaging example: `pyproject.toml`
-
-.huge[
-What is `.toml`?
-
-
-> "TOML aims to be a .bold[minimal configuration file format] that's easy to read due to obvious semantics. TOML is designed to map unambiguously to a hash table. TOML should be .bold[easy to parse into data structures] in a wide variety of languages." &mdash; https://toml.io/ (emphasis mine)
-
-In recent years TOML has seen a rise in popularity for configuration files and lock files. Things that need to be easy to read (humans) and easy to parse (machines).
+.footnote[
+This is a **flat** layout (package next to config). You'll also see a `src/` layout —
+both are fine; `src/` avoids accidentally importing from the working directory.
 ]
 
 ---
-# Simple packaging example: `pyproject.toml`
+# `pyproject.toml`: what is `.toml`?
 
-.huge[
-Defining how your project should get .bold[built]
+.large[
+> "TOML aims to be a .bold[minimal configuration file format] that's easy to read due to
+> obvious semantics. TOML is designed to map unambiguously to a hash table." — https://toml.io/
+
+TOML has become the standard for Python config and lock files: easy for **humans** to read
+and **machines** to parse.
 ]
+
+---
+# `pyproject.toml`: how it gets built
+
+.huge[Defining how your project should be .bold[built]:]
 
 ```toml
 [build-system]
-requires = [
-    "hatchling>=1.13.0",
-    "hatch-vcs>=0.3.0",
-]
-build-backend = "hatchling.build"
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+```
 
-...
+.footnote[
+With `hatchling` this would be `requires = ["hatchling"]` /
+`build-backend = "hatchling.build"`. The rest of the file looks the same.
+]
+
+---
+# `pyproject.toml`: metadata & requirements
+
+.huge[Defining project .bold[metadata and dependencies]:]
+
+```toml
+[project]
+name = "climkern"
+version = "1.2"
+authors = [
+    {name = "Ty Janoski", email = "tyfolino@gmail.com"},
+]
+requires-python = ">= 3.9"
+readme = "README.md"
+dependencies = [
+    "xarray>=0.16.2",
+    "cf-xarray>=0.5.1",
+    "xesmf>=0.7.1",
+    "pooch",
+    "plac",
+    "netCDF4",
+    # ...
+]
 ```
 
 ---
-# Simple packaging example: `pyproject.toml`
+# `pyproject.toml`: optional dependencies
 
-.huge[
-Defining project .bold[metadata and requirements]
+.huge[Extra dependencies users opt into:]
+
+```toml
+[project.optional-dependencies]
+test = ["pytest>=7,<8"]
+lint = ["pre-commit>=2.20.0"]
+```
+
+```console
+$ pip install "climkern[test]"   # install climkern + its test deps
+```
+
+.footnote[
+.blue[2026 note:] there's now a *standard* way to declare dev-only dependencies that
+**aren't** published as installable extras — `[dependency-groups]` (PEP 735). More later.
+]
+
+---
+# `pyproject.toml`: tooling config
+
+.huge[Configuring .bold[tools] in one place:]
+
+```toml
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+extend-select = ["E", "F", "D", "I001", "UP", "N", "B", "RUF"]
+
+[tool.black]
+line-length = 88
+target-version = ["py39", "py310", "py311", "py312"]
+```
+
+.footnote[
+One file configures your **linter** (ruff), **formatter** (black), test runner, type
+checker, and more — instead of a `.cfg` / `.ini` per tool.
+]
+
+---
+# What ClimKern's metadata is *missing*
+
+.large[
+Presenting a real package means seeing what could be better. ClimKern's `pyproject.toml`
+could add **discovery metadata**:
 ]
 
 ```toml
 [project]
-name = "rosen"
-dynamic = ["version"]
-description = "Example package for demonstration"
-readme = "README.md"
-license = { text = "MIT" }  # SPDX short identifier
-authors = [
-  { name = "Matthew Feickert", email = "matthew.feickert@cern.ch" },
-]
-requires-python = ">=3.8"
-
-dependencies = [
-    "scipy>=1.6.0",
-    "numpy",  # compatible versions controlled through scipy
+license = "MIT"                       # SPDX expression (PEP 639)
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Atmospheric Science",
 ]
 
-...
+[project.urls]
+Homepage = "https://github.com/tyfolino/climkern"
+Documentation = "https://tyfolino.github.io/climkern/"
+Issues = "https://github.com/tyfolino/climkern/issues"
 ```
+
+.footnote[
+Classifiers and URLs are what populate your project's PyPI page — worth adding! (I might
+fix this live this week. 😉)
+]
 
 ---
-# Simple packaging example: `pyproject.toml`
-
-.huge[
-Configuring .bold[tooling options and interactions] with other tools
-]
-
-```toml
-[tool.hatch.version]
-source = "vcs"
-
-[tool.hatch.version.raw-options]
-local_scheme = "no-local-version"
-# Need to give root as we aren't at the same level as the git repo
-root = "../.."
-
-[tool.hatch.build.hooks.vcs]
-version-file = "src/rosen/_version.py"
-...
-```
-
----
-# Simple packaging example: Installing your code
-
-You can now .bold[locally install] your package into your Python virtual environment
-
-```
-$ cd examples/simple_packaging
-$ python -m pip install --upgrade pip wheel
-$ python -m pip install .
-Successfully built rosen
-Installing collected packages: rosen
-Successfully installed rosen-0.0.1
-$ python -m pip show rosen
-Name: rosen
-Version: 0.0.1
-Summary: Example package for demonstration
-Home-page:
-Author:
-Author-email: Matthew Feickert <matthew.feickert@cern.ch>
-License: MIT
-Location: ***/lib/python3.12/site-packages
-Requires: numpy, scipy
-Required-by:
-```
-
----
-# Simple packaging example: Installing your code
-
-.huge[
-and use it anywhere
-]
+# Essential files beyond the code
 
 .large[
-```python
-# example.py
-import numpy as np
-from scipy.optimize import minimize
-
-# We can now import our code
-from rosen.example import rosen, rosen_der
-
-x0 = np.array([1.3, 0.7, 0.8, 1.9, 1.2])
-result = minimize(rosen, x0, method="BFGS",
-                  jac=rosen_der, options={"disp": True})
-optimized_params = result.x
-# array([1.00000004, 1.0000001 , 1.00000021, 1.00000044, 1.00000092])
-```
+A package is more than `.py` files. Reviewers and users look for:
 ]
+
+* **README** — what it is, how to install, a usage example, license *(ClimKern ✓)*
+* **LICENSE** — without one, others legally can't reuse it *(ClimKern ✓ — MIT)*
+* **CHANGELOG** — human-readable version history (semantic versioning)
+* **CONTRIBUTING** — how to set up a dev environment and submit changes
+* **CODE_OF_CONDUCT** — expectations for the community
+* **CITATION.cff** — how to cite the software *(ClimKern ✓ — more soon)*
+
+---
+# Installing your code
+
+You can **locally install** your package into your environment:
+
+```console
+$ cd climkern
+$ python -m pip install .
+Successfully built climkern
+Installing collected packages: climkern
+Successfully installed climkern-1.2
+```
+
+...or, since ClimKern is published, anyone can just:
+
+```console
+$ pip install climkern
+```
+
+and then `import climkern` anywhere their environment is active.
 
 ---
 # Packaging doesn't slow down development
 
 .huge[
-[PEP 518](https://peps.python.org/pep-0518/) compliant build backends allow for "[editable installs](https://pip.pypa.io/en/latest/topics/local-project-installs/#editable-installs)"
+Build backends support "[editable installs](https://pip.pypa.io/en/latest/topics/local-project-installs/#editable-installs)":
 ]
+
+```console
+$ python -m pip install --editable .
+```
 
 .large[
-```
-$ python -m pip install --upgrade --editable .
-$ python -m pip show rosen | grep --ignore-case 'location'
-Location: ***/lib/python3.12/site-packages
-Editable project location: ***/examples/simple_packaging
-```
-]
-
-.huge[
-Editable installs add the files in the development directory to Python’s import path. (Only need to re-installation if you change the project metadata.)
-
-Can .bold[develop] your code under `src/` and have .bold[immediate] access to it
+Editable installs add your development files to Python's import path. You can **develop**
+your code and have **immediate** access to changes — no reinstall needed (unless you change
+project metadata).
 ]
 
 ---
-# Packaging compiled extensions
-
-.huge[
-With modern packaging infrastructure, packaging compiled extensions requires small extra work
-]
-
-```
-$ tree examples/compiled_packaging
-examples/compiled_packaging
-├── CMakeLists.txt  # Addition of CMake
-├── LICENSE
-├── pyproject.toml  # build backend change
-├── README.md
-├── src
-│   ├── basic_math.cpp  # C++ extension
-│   └── rosen_cpp
-│       ├── example.py
-│       └── __init__.py
-└── tests
-    └── test_example.py
-
-3 directories, 8 files
-```
-
----
-# Packaging compiled extensions
-
-.huge[
-.bold[`pyproject.toml`]:
-
-Swap build system to [`scikit-build-core`](https://scikit-build-core.readthedocs.io/) + [`pybind11`](https://github.com/pybind/pybind11)
-
-```toml
-[build-system]
-requires = [
-  "scikit-build-core",
-  "pybind11"
-  ]
-build-backend = "scikit_build_core.build"
-
-...
-```
-]
-
----
-# Packaging compiled extensions
-
-.huge[
-[.bold[`CMakeLists.txt`]](https://cliutils.gitlab.io/modern-cmake/):
-]
+# Entry points: `python -m climkern`
 
 .large[
-```cmake
-# Specify CMake version and project language
-cmake_minimum_required(VERSION 3.15...3.30)
-project(${SKBUILD_PROJECT_NAME} LANGUAGES CXX)
-
-# Setup pybind11
-set(PYBIND11_FINDPYTHON ON)
-find_package(pybind11 CONFIG REQUIRED)
-
-# Add the pybind11 module to build targets
-pybind11_add_module(basic_math MODULE src/basic_math.cpp)
-install(TARGETS basic_math DESTINATION ${SKBUILD_PROJECT_NAME})
-```
+ClimKern's kernels live on Zenodo (too big for PyPI). A `__main__.py` lets users run the
+downloader as a command:
 ]
-
----
-# Packaging compiled extensions
-
-.huge[
-.bold[`src/basic_math.cpp`]:
-]
-
-.large[
-```c++
-#include <pybind11/pybind11.h>
-
-int add(int i, int j) { return i + j; }
-
-namespace py = pybind11;
-
-PYBIND11_MODULE(basic_math, m) {
-  m.def("add", &add, R"pbdoc(
-      Add two numbers
-  )pbdoc");
-
-...
-
-}
-```
-]
-
----
-# Packaging compiled extensions: Installing
-
-Installing locally is the same as for the pure-Python example:
-
-```
-$ cd examples/simple_packaging
-$ python -m pip install --upgrade pip wheel
-$ python -m pip install .
-Successfully built rosen-cpp
-Installing collected packages: rosen-cpp
-Successfully installed rosen-cpp-0.0.1
-```
-
-Module name is that given in C++:
 
 ```python
-from rosen_cpp import basic_math
+# climkern/__main__.py
+if __name__ == "__main__":
+    import sys, plac
+    from .download import download
 
-basic_math.add(1, 2)
-# 3
+    commands = {"download": download}
+    command = sys.argv.pop(1)
+    plac.call(commands[command], sys.argv[1:])
 ```
+
+```console
+$ python -m climkern download   # fetch the kernel datasets
+```
+
+.footnote[
+You can also expose true console commands via `[project.scripts]`, e.g. a `climkern`
+executable on the user's `PATH`.
+]
 
 ---
-# Going further: Distributing packages
+# Don't forget the tests
 
-.huge[
-If your code is publicly available on the WWW in a Git repository, you've already done a version of distribution!
+.large[
+Because ClimKern is installed as a package, its tests ship with it and run anywhere:
 ]
 
-.tiny[
-(tiny font sorry)
+```console
+$ pip install "climkern[test]"
+$ pytest -v --pyargs climkern
 ```
-# General pattern is:
-# python -m pip install "project @ git+https://example.com/repo/project.git@branch#subdirectory=path"
-$ python -m pip install \
-  "git+https://github.com/matthewfeickert-talks/talk-urssi-summer-school-2024.git#subdirectory=examples/simple_packaging"
-```
+
+.large[
+Good tests + CI mean a new contributor gets **automatic feedback** on whether their change
+fits — which is exactly what frees up human code review (tomorrow's session!).
 ]
 
-(more reasonable font size, and more common, example)
+---
+# The dependency reality: not everything `pip`-installs
 
+.large[
+ClimKern regrids kernels with [**ESMPy**](https://earthsystemmodeling.org/esmpy/), which
+wraps a compiled Fortran/C++ library and is **not available on PyPI**.
+]
+
+So ClimKern's install instructions start with conda:
+
+```console
+$ conda create -n ck_env python=3.11 esmpy -c conda-forge
+$ conda activate ck_env
+$ pip install climkern
 ```
+
+.large[
+This is extremely common in scientific Python — and it's why we need to talk about
+**conda-forge**.
+]
+
+---
+# Distributing packages: [conda-forge](https://conda-forge.org/)
+
+.large[
+The `conda` family ([`conda`](https://docs.conda.io/), [`mamba`](https://mamba.readthedocs.io/),
+[`pixi`](https://prefix.dev/docs/pixi/)) are **general-purpose** package managers.
+
+Instead of only Python packages, they install **all** dependencies (including Python and
+compiled libraries) as OS- and architecture-specific **built binaries** hosted on
+conda-forge.
+]
+
+* Popular in scientific computing because arbitrary binaries can be hosted — compilers,
+  Fortran, even the full NVIDIA CUDA stack
+* The trade-off: with binaries only, if there's no matching build, there's no automatic
+  fallback to building from source (unlike `pip` + sdists)
+
+---
+# Going further: distributing via Git
+
+.large[
+If your code is in a public Git repo, you've already done a version of distribution!
+]
+
+```console
 # Works for pure-Python packages
-$ python -m pip install --upgrade "git+https://github.com/scikit-hep/pyhf.git"
-# as well as packages with compiled extensions
-$ python -m pip install --upgrade "git+https://github.com/scikit-hep/iminuit.git"
+$ python -m pip install "git+https://github.com/tyfolino/climkern.git"
+
+# General pattern
+$ python -m pip install "pkg @ git+https://example.com/repo.git@branch"
 ```
 
----
-# Going further: Distributing packages
-
-.huge[
-Ideally we'd prefer a more organized approach: distribution through a .bold[package index]
-
-First we need to create .bold[distributions] of our packaged code.
-
-Distributions that `pip` can install:
-
-* .bold[[source distribution (sdist)](https://packaging.python.org/en/latest/glossary/#term-Source-Distribution-or-sdist)]: A tarfile (`.tar.gz`) of the source files of our package (subset of all the files in the repository)
-* .bold[[wheel](https://packaging.python.org/en/latest/glossary/#term-Built-Distribution)]: A zipfile (`.whl`) of the file system structure and package metadata with any dependencies prebuilt
-   - No arbitrary code execution, only decompressing and copying of files
-]
+.large[Great for trying a branch or an unreleased fix — but for users we want something tidier.]
 
 ---
-# Going further: Distributing packages
+# Building distributions: sdist & wheel
 
-.huge[
-To create these .bold[distributions] from source code, rely on our package .bold[build backend] (e.g. [`hatchling`](https://hatch.pypa.io/)) and .bold[build frontend] tool like [`build`](https://pypa-build.readthedocs.io/en/stable/)
+.large[
+`pip` installs two kinds of **distributions**:
 ]
 
-```
+* **[sdist](https://packaging.python.org/en/latest/glossary/#term-Source-Distribution-or-sdist)** — a `.tar.gz` of your source files
+* **[wheel](https://packaging.python.org/en/latest/glossary/#term-Built-Distribution)** — a `.whl` zip of the built files + metadata (no code execution to install)
+
+```console
 $ python -m pip install --upgrade build
 $ python -m build .
-* Creating venv isolated environment...
-* Installing packages in isolated environment... (hatch-vcs>=0.3.0, hatchling>=1.13.0)
-* Getting build dependencies for sdist...
-* Building sdist...
-* Building wheel from sdist
-* Creating venv isolated environment...
-* Installing packages in isolated environment... (hatch-vcs>=0.3.0, hatchling>=1.13.0)
-* Getting build dependencies for wheel...
-* Building wheel...
-Successfully built rosen-0.0.1.tar.gz and rosen-0.0.1-py3-none-any.whl
+Successfully built climkern-1.2.tar.gz and climkern-1.2-py3-none-any.whl
 $ ls dist
-rosen-0.0.1-py3-none-any.whl  rosen-0.0.1.tar.gz
+climkern-1.2-py3-none-any.whl  climkern-1.2.tar.gz
 ```
 
 ---
-# Going further: Distributing packages
+# Uploading to a package index (PyPI)
 
-.huge[
-Can now [securely upload](https://blog.pypi.org/posts/2023-04-20-introducing-trusted-publishers/) the distributions under `./dist/` to [.italic[any] package index](https://packaging.python.org/en/latest/guides/hosting-your-own-index/) that understands how to use them.
-
-The most common is the [Python Package Index (PyPI)](https://pypi.org/) which serves as the default package index for `pip`.
+.large[
+Upload the files in `./dist/` to the [Python Package Index (PyPI)](https://pypi.org/) —
+`pip`'s default index.
+]
 
 <p style="text-align:center;">
-   <a href="https://pypi.org/">
-      <img src="figures/pypi-page.png"; width=45%>
+   <a href="https://pypi.org/project/climkern/">
+      <img src="figures/pypi-page.png" width=45%>
    </a>
 </p>
+
+.footnote[
+Historically you'd use `twine upload`. In 2026 there's a better way — see the
+"What's new" section.
 ]
 
 ---
-# Distributing packages: [conda-forge](https://conda-forge.org/)
+# Reproducibility: lock files
 
-.huge[
-The `conda` family of package managers ([`conda`](https://docs.conda.io/), [`mamba`](https://mamba.readthedocs.io/), [`micromamba`](https://mamba.readthedocs.io/en/latest/user_guide/micromamba.html), [`pixi`](https://prefix.dev/docs/pixi/overview)) take an alternative approach from `pip`.
+.large[
+Your *library* (`climkern`) should support a **range** of dependency versions
+(reusable). But a specific *analysis* you want to reproduce exactly needs a **lock file**:
+a hash-level record of every dependency.
+]
 
-Instead of installing Python packages, they act as general purpose package managers and install .bold[all dependencies] (including Python) as OS and architecture specific .bold[built binaries] (`.conda` files &mdash; `zip`file containing compressed `tar` files) hosted on conda-forge.
+* For `pip`: [`pip-tools`](https://pip-tools.readthedocs.io/), [`uv`](https://docs.astral.sh/uv/)
+* For the `conda` family: [`conda-lock`](https://conda.github.io/conda-lock/), [`pixi`](https://prefix.dev/docs/pixi/)
 
-Allows an additional level of runtime environment specification not possible with just `pip`, though getting environment solves right can become more complicated.
+Keep the lock file in version control alongside the analysis.
+
+---
+# Aside: compiled extensions
+
+.large[
+ClimKern is pure Python, but many scientific packages ship C/C++/Fortran. With modern
+tooling that's only a little extra work:
+]
+
+* Swap the build backend to [`scikit-build-core`](https://scikit-build-core.readthedocs.io/) + [`pybind11`](https://github.com/pybind/pybind11)
+* Add a `CMakeLists.txt`
+* conda-forge (or wheels with bundled binaries) handles distribution
+
+.footnote[
+If/when you need this, the [Scientific Python guide](https://learn.scientific-python.org/development/)
+walks through it end to end.
 ]
 
 ---
-# Distributing packages: [conda-forge](https://conda-forge.org/)
+# Zenodo: a versioned archive of *everything*
+.center.large[code, documents, data products, data sets — each gets a DOI]
 
-.huge[
-Popular in scientific computing as arbitrary binaries can be hosted, including compilers (e.g. `gcc`, Fortran) and even the [full NVIDIA CUDA stack](https://twitter.com/jeremyphoward/status/1697435241152127369)!
+.kol-1-2[
+.center.width-95[[![zenodo-landing-page](figures/zenodo-landing-page.png)](https://zenodo.org/)]
+.center[A DOI for the project **and** each version]
+]
+.kol-1-2[
+.large[
+ClimKern's releases are archived automatically from GitHub:
 
-With the change to full binaries only this also requires that specification of the environment being installed is important.
+**DOI:** [10.5281/zenodo.14743210](https://doi.org/10.5281/zenodo.14743210)
 
-With sdists and wheels, if there is no compatible wheel available, `pip` will automatically .bold[fall back] to trying to locally build from the sidst. Can't do that if there is .bold[no matching `.conda` binary]!
+Tag a release → Zenodo mints a DOI → put it in your README and papers.
+]
 ]
 
 ---
-# Defining the environment: [Application vs. Library](https://iscinumpy.dev/post/app-vs-library/)
+# Make your software citable: `CITATION.cff`
 
-.huge[
-Have been reasonably assuming that packaged code can be used in arbitrary environments with other code that is compatible (library-like).
-
-For distributing code, this is probably the correct view, but your analysis is not a library. Your analysis is an application (a hand crafted implementation of code from libraries).
-
-While your analysis might run with arbitrary configurations of the defined libraries and runtimes (.bold[reusable]) want to also have a hash-level specified version for .bold[reproduciblity]: a .bold[lock file]
+.large[
+A [`CITATION.cff`](https://citation-file-format.github.io/) file tells GitHub (and humans)
+exactly how to cite your software. GitHub shows a "Cite this repository" button.
 ]
 
----
-# Defining the environment: Lock file
-
-.huge[
-Lock files are simple: A hash level record of every dependency in the environment.
-
-Allow for reproducibility by simply being an list of every file to download from the internet.
-
-Should be programmatically generated from a high level requirements file and maintained in version control with your analysis.
-
-* For `pip`: [`pip-tools`](https://pip-tools.readthedocs.io/en/latest/), [`pdm`](https://pdm.fming.dev/), [`pipenv`](https://pipenv.pypa.io/), [`poetry`](https://python-poetry.org/)
-* For `conda` family: [`conda-lock`](https://conda.github.io/conda-lock/), [`pixi`](https://prefix.dev/docs/pixi/)
-]
-
----
-# Defining the environment: Comparing to Julia
-
-.huge[
-The approach of [`pixi`](https://prefix.dev/docs/pixi/) is [similar to Julia](https://pkgdocs.julialang.org/v1/toml-files/).
-
-* `Project.toml`: .bold[describes the project on a high level]
-* `Manifest.toml`: .bold[absolute record] of the state of the packages in the environment (a lock file)
-
-Julia's package manager [`Pkg.jl`](https://pkgdocs.julialang.org/v1/) provides users a high level interface to edit `Project.toml` and then automatically updates `Manifest.toml` in response. Reproducibility of environment by default!
-
-* Library: `Project.toml` in version control
-* Application: `Project.toml` and `Manifest.toml` in version control
-]
-
----
-# Areas still to discuss another time
-
-.huge[
-* Full environment specification with Linux (Open Container Initiative (OCI)) container images (Docker, Apptainer, Podman)
-* Orchestration of multiple environments inside of an analysis
-   - Using workflow languages
-* The difficult realities of long term preservation
-   - Assumptions of present technologies don't translate forever into the future, infrastructure goes away
-   - How to store files that aren't "code" (e.g. images, training data, database files) &mdash; c.f. Zenodo
-* What analysis reuse looks like
-   - [RECAST](https://arxiv.org/abs/1010.2506) (particle physics)
-]
-
----
-# Recommendations: Tooling
-
-.huge[
-Don't start your next Python project from scratch! Use the Scientific Python library development Cookiecutter: [`cookie`](https://github.com/scientific-python/cookie)
-
-```
-$ pipx install cookiecutter
-$ cookiecutter gh:scientific-python/cookie
-#  [1/14] The name of your project (package):
-# ...
+```yaml
+cff-version: 1.2.0
+title: "ClimKern"
+version: "1.2.0"
+doi: "10.5281/zenodo.14743210"
+authors:
+  - family-names: "Janoski"
+    given-names: "Tyler P."
+    orcid: "0000-0003-4344-355X"
+preferred-citation:
+  type: article
+  title: "ClimKern: A Python package for calculating radiative feedbacks..."
+  journal: "Geoscientific Model Development"
+  year: 2025
+  doi: "10.5194/gmd-18-3065-2025"
 ```
 
-`cookie` will setup your repository for you with templated layouts for 11 different build backends and adheres to packaging and development best practices.
+.footnote[
+Software citation gets its own session on Day 3 — this is the file that makes it work.
 ]
 
 ---
-# Recommendations: Community Guides
+class: middle, center
 
-.huge[
-Packaging standards and best practices continue to change and get better. Instead of trying to maintain your own resources .bold[follow and engage] with community resources created by the teams that are building the tools and infrastructure.
+# What's new in 2026
+
+### (the field has moved since the 2024 talks)
+
+---
+# `uv`: one fast tool for the whole workflow
+
+.large[
+[`uv`](https://docs.astral.sh/uv/) (from Astral, the `ruff` folks) is a Rust-based tool
+that has reshaped Python packaging since 2024 — it's *fast* and covers the whole lifecycle:
+]
+
+```console
+$ uv venv                     # create a virtual environment
+$ uv pip install climkern     # a drop-in, much faster pip
+$ uv add xarray               # add a dependency to pyproject.toml + lock
+$ uv lock                     # write a universal lock file (uv.lock)
+$ uv run pytest               # run in the project env, auto-synced
+$ uv build                    # build sdist + wheel
+$ uv publish                  # upload to PyPI
+$ uvx ruff check .            # run a tool without installing it (like pipx)
+```
+
+.footnote[
+`pip`, `hatch`, and `conda` all still work great — `uv` is an option, not a requirement.
+]
+
+---
+# New packaging standards worth knowing
+
+.large[
+* **PEP 639** — declare your license as an [SPDX expression](https://spdx.org/licenses/):
+  `license = "MIT"` + `license-files = ["LICENSE"]` (replaces the old table form and the
+  license classifiers)
+
+* **PEP 735** — `[dependency-groups]` in `pyproject.toml`: a standard way to declare
+  dev/test/docs dependencies that *aren't* published as installable extras
+
+* **PEP 751** — `pylock.toml`: a **standardized** lock-file format, so lock files aren't
+  locked to one tool
+]
+
+---
+# Publishing to PyPI in 2026
+
+.large[
+* **2FA is mandatory** on PyPI for all maintainers
+* **[Trusted Publishing](https://docs.pypi.org/trusted-publishers/)** — publish straight
+  from GitHub Actions using OpenID Connect, with **no API tokens** to manage or leak
+* **PEP 740 attestations** — releases can carry signed provenance proving *which* workflow
+  built them
+]
+
+.footnote[
+A few lines of GitHub Actions config replaces `twine upload` and a long-lived token.
+]
+
+---
+# Don't start from scratch
+
+.large[
+Use a template to set up your repo with best practices baked in:
+]
+
+* [`scientific-python/cookie`](https://github.com/scientific-python/cookie) — templates for
+  11+ build backends, plus CI, linting, and docs scaffolding
+* [`copier`](https://copier.readthedocs.io/) — like cookiecutter, but lets you **re-apply**
+  template updates to an existing project later
+
+```console
+$ uvx copier copy gh:scientific-python/cookie my-new-package
+```
+
+---
+# Recommendation: follow community guides
+
+.large[
+Packaging best practices keep changing (for the better). Instead of maintaining your own
+lore, **follow and engage** with the teams building the tools.
 ]
 
 <p style="text-align:center;">
    <a href="https://learn.scientific-python.org/development/">
-      <img src="figures/scientific-python-development-guide.png"; width=60%>
+      <img src="figures/scientific-python-development-guide.png" width=55%>
    </a>
 </p>
 .caption[[Scientific Python Library Development Guide](https://learn.scientific-python.org/development/)]
 
 ---
-# Recommendations: Collaboration
+# Recommendation: work with RSEs
 
 .large[
-Find and start working with Research Software Engineers (RSE).
+Find and collaborate with Research Software Engineers (RSEs).
 
-* I don't think that most scientists care/get excited about learning packaging tools. We just want things to work. RSEs can make that easier and are SUPER knowledgeable!
-   - I'm among the "not excited". I care about packaging because I care about reusable tools for science.
+Most scientists don't get excited about packaging tools — we just want things to work.
+RSEs make that easier and are *super* knowledgeable.
 ]
 
 <p style="text-align:center;">
    <a href="https://society-rse.org/">
-      <img src="figures/rse-page.png"; width=40%>
+      <img src="figures/rse-page.png" width=35%>
    </a>
 </p>
 .caption[[Society of Research Software Engineering](https://society-rse.org/)]
 
 ---
-# Recommendations: Zenodo
-.center.huge[Versioned archive of .bold[everything]: code, documents, data products, data sets]
-
-.kol-1-2[
-.center.width-95[[![zenodo-landing-page](figures/zenodo-landing-page.png)](https://zenodo.org/)]
-.center[DOI for project and each version]
-]
-.kol-1-2[
-.center.width-60[[![why_use_zenodo](figures/why_use_zenodo.png)](https://zenodo.org/)]
-]
-
----
 # Summary
 
-.huge[
-* Whirlwind tour of lifting analysis code from version control, to packages, distributed binaries, and the rest of the world
-* Not a hopeless bog of technical debt, but community infrastructure built by people who you can collaborate with
-* Reusable code can be a nucleation point for communities
-]
-
-.kol-1-4[
-<p style="text-align:center;">
-   <a href="https://github.com/">
-      <img src="figures/github-mark.svg"; width=95%>
-   </a>
-</p>
-]
-.kol-1-4[
-<p style="text-align:center;">
-   <a href="https://pypi.org/">
-      <img src="figures/pypi-logo.svg"; width=95%>
-   </a>
-</p>
-]
-.kol-1-4[
-<br>
-<p style="text-align:center;">
-   <a href="https://conda-forge.org/">
-      <img src="figures/conda-forge-anvil.png"; width=95%>
-   </a>
-</p>
-]
-.kol-1-4[
-<p style="text-align:center;">
-   <a href="https://paperswithcode.com/">
-      <img src="figures/papers-with-code.png"; width=95%>
-   </a>
-</p>
+.large[
+* We lifted a real analysis (ClimKern) from scripts → an installable, tested, **citable** package
+* Packaging is not a hopeless bog — it's community infrastructure built by people you can
+  collaborate with
+* `pyproject.toml` is the one file at the center of it all
+* In 2026: `uv`, SPDX licenses, standardized lock files, and Trusted Publishing make it smoother than ever
+* Reusable code can be a nucleation point for a community
 ]
 
 ---
 # References
 
-1. [Level Up Your Python](https://henryiii.github.io/level-up-your-python/), Henry Schreiner
-2. [Python Packaging User Guide, Packaging Python Projects Tutorial](https://packaging.python.org/en/latest/tutorials/packaging-projects/), The PyPA
-3. [Scientific Python Library Development Guide](https://learn.scientific-python.org/development/), Scientific Python (originally made by Scikit-HEP)
-4. [`cookie`](https://github.com/scientific-python/cookie), Scientific Python (originally made by Scikit-HEP)
-5. [INTERSECT's packaging tutorial](https://intersect-training.org/packaging/), INTERSECT
-
----
-class: end-slide, center
-
-Backup
-
----
-# Zenodo: DOI minting made easy
-
-- Everything on Zenodo has a DOI
-   - Provides both a .bold[project] DOI (resolves to latest) and .bold[version specific] DOI
-- Enable it to [automatically preserve work from GitHub](https://guides.github.com/activities/citable-code/) (can also directly upload, but lose out on automation)
-   - Benefit from having a DOI for .bold[every version] regardless of software paper landscape state
-- Once you have a DOI, put it .bold[everywhere] (again)
-   - Recommend sharing the project DOI and letting users select a specific version if they want it
-
-.center[
-.width-80[[![Zenodo_DOI_guide](figures/Zenodo_DOI_guide.png)](https://zenodo.org/account/settings/github/)]
+.large[
+1. [Matthew Feickert's 2024 URSSI packaging talk](https://github.com/matthewfeickert-talks/talk-urssi-summer-school-2024)
+2. [Kyle Niemeyer's packaging module](https://kyleniemeyer.github.io/research-software-dev-modules/module-packaging/)
+3. [PyPA Packaging Python Projects Tutorial](https://packaging.python.org/en/latest/tutorials/packaging-projects/)
+4. [Scientific Python Library Development Guide](https://learn.scientific-python.org/development/)
+5. [`uv` documentation](https://docs.astral.sh/uv/)
+6. [ClimKern](https://github.com/tyfolino/climkern) (the running example)
 ]
 
 ---
-# Julia ecosystem for easier CUDA
-
-.huge[
-Julia's packaging system seems to be working, as using [CUDA libraries in Julia](https://juliagpu.org/) is rather simple.
-]
-
----
-
-class: end-slide, center
+class: middle, center
 count: false
 
-The end.
+# The end.
+
+`pip install climkern` · [github.com/tyfolino/climkern](https://github.com/tyfolino/climkern)

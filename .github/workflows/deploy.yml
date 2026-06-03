@@ -15,32 +15,19 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install dependencies
-        run: pip install jupyter nbconvert
-
-      - name: Build notebook slides
-        run: make slides
-
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: .
-
   deploy:
-    needs: build
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
+      - uses: actions/checkout@v4
+
+      # The talks are static Remark.js (plain HTML + Markdown) — no build step.
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
       - name: Deploy to GitHub Pages
         id: deploy
         uses: actions/deploy-pages@v4
