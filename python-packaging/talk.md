@@ -14,7 +14,7 @@ count: false
 June 8th, 2026
 
 ---
-# My motivations on this topic
+# About Me
 
 .kol-1-2[
 .large[
@@ -27,8 +27,7 @@ June 8th, 2026
 ]
 .kol-1-2[
 .large[
-We'll use **ClimKern** as our running example throughout —
-warts and all, it's a *real* research package, not a toy.
+We'll use **ClimKern** as our running example throughout.
 ]
 
 <br>
@@ -55,7 +54,7 @@ URSSI talk and [Kyle Niemeyer](https://kyleniemeyer.github.io/research-software-
 6. The code "works on my machine" — but what about your collaborators?
 ]
 
-.center.large.bold[People heroically press forward, but this is painful, and not reusable.]
+.center.large.bold[This is painful and not reusable.]
 
 ---
 # Reusable science, step by step
