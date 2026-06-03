@@ -35,7 +35,7 @@ warts and all, it's a *real* research package, not a toy.
 
 `pip install climkern`
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14743210.svg)](https://doi.org/10.5281/zenodo.14743210)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10291284.svg)](https://doi.org/10.5281/zenodo.10291284)
 ]
 
 .footnote[
@@ -187,7 +187,8 @@ The .green[okay news]: you can probably default to the simplest thing
 ]
 
 .footnote[
-ClimKern uses `setuptools` — perfectly valid and still the most common backend you'll see.
+ClimKern uses `setuptools` (+ `setuptools-scm` for versioning) — perfectly valid and still
+the most common backend you'll see.
 ]
 
 ---
@@ -201,8 +202,7 @@ file: [`pyproject.toml`](https://packaging.python.org/en/latest/guides/writing-p
 ```console
 $ tree climkern
 climkern
-├── pyproject.toml   # controls packaging + tool config
-├── setup.py         # tiny shim for setuptools
+├── pyproject.toml   # controls packaging + tool config (no setup.py needed!)
 ├── README.md
 ├── LICENSE
 ├── CITATION.cff     # how to cite the software
@@ -218,7 +218,8 @@ climkern
 
 .footnote[
 This is a **flat** layout (package next to config). You'll also see a `src/` layout —
-both are fine; `src/` avoids accidentally importing from the working directory.
+both are fine; `src/` avoids accidentally importing from the working directory.<br>
+Modern `setuptools` builds from `pyproject.toml` alone — no `setup.py` shim required.
 ]
 
 ---
@@ -239,13 +240,16 @@ and **machines** to parse.
 
 ```toml
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=77", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]   # version comes from your git tags
 ```
 
 .footnote[
-With `hatchling` this would be `requires = ["hatchling"]` /
-`build-backend = "hatchling.build"`. The rest of the file looks the same.
+[`setuptools-scm`](https://setuptools-scm.readthedocs.io/) derives the version from your
+latest git tag: tag `v1.2.1`, and the build *is* `1.2.1` — no version string to bump by
+hand. (With `hatchling` you'd swap in `hatchling` / `hatch-vcs`.)
 ]
 
 ---
@@ -256,7 +260,9 @@ With `hatchling` this would be `requires = ["hatchling"]` /
 ```toml
 [project]
 name = "climkern"
-version = "1.2"
+dynamic = ["version"]            # set by setuptools-scm from git tags
+description = "Easily compute climate feedbacks with radiative kernels."
+license = "MIT"                  # SPDX expression (PEP 639)
 authors = [
     {name = "Ty Janoski", email = "tyfolino@gmail.com"},
 ]
@@ -315,32 +321,24 @@ checker, and more — instead of a `.cfg` / `.ini` per tool.
 ]
 
 ---
-# What ClimKern's metadata is *missing*
+# I modernized ClimKern for this release
 
 .large[
-Presenting a real package means seeing what could be better. ClimKern's `pyproject.toml`
-could add **discovery metadata**:
+Presenting a *real* package means you get to watch it evolve. Here's what I actually
+changed going into **v1.2.1** (all real commits you can see on GitHub):
 ]
 
-```toml
-[project]
-license = "MIT"                       # SPDX expression (PEP 639)
-classifiers = [
-    "Development Status :: 5 - Production/Stable",
-    "Intended Audience :: Science/Research",
-    "Programming Language :: Python :: 3",
-    "Topic :: Scientific/Engineering :: Atmospheric Science",
-]
-
-[project.urls]
-Homepage = "https://github.com/tyfolino/climkern"
-Documentation = "https://tyfolino.github.io/climkern/"
-Issues = "https://github.com/tyfolino/climkern/issues"
-```
+| Before (v1.2) | After (v1.2.1) |
+|:--|:--|
+| `setup.py` shim | gone — `pyproject.toml` only |
+| `version = "1.2"` (hardcoded) | `dynamic` — from git tags via `setuptools-scm` |
+| no `license` field | `license = "MIT"` (SPDX, PEP 639) |
+| no classifiers / URLs | full PyPI **discovery metadata** added |
+| `precommit` typo in `lint` extra | fixed to `pre-commit` |
 
 .footnote[
-Classifiers and URLs are what populate your project's PyPI page — worth adding! (I might
-fix this live this week. 😉)
+None of this was a rewrite — packaging best practices are a moving target, and catching up
+is normal maintenance. Classifiers and URLs are what populate your PyPI page.
 ]
 
 ---
@@ -575,7 +573,7 @@ walks through it end to end.
 .large[
 ClimKern's releases are archived automatically from GitHub:
 
-**DOI:** [10.5281/zenodo.14743210](https://doi.org/10.5281/zenodo.14743210)
+**DOI:** [10.5281/zenodo.10291284](https://doi.org/10.5281/zenodo.10291284)
 
 Tag a release → Zenodo mints a DOI → put it in your README and papers.
 ]
@@ -592,22 +590,26 @@ exactly how to cite your software. GitHub shows a "Cite this repository" button.
 ```yaml
 cff-version: 1.2.0
 title: "ClimKern"
-version: "1.2.0"
-doi: "10.5281/zenodo.14743210"
+version: "1.2.1"
+doi: "10.5281/zenodo.10291284"   # concept DOI — always resolves to latest
 authors:
   - family-names: "Janoski"
     given-names: "Tyler P."
     orcid: "0000-0003-4344-355X"
+contributors:                    # credit the people who helped!
+  - family-names: "Linke"
+    given-names: "Olivia"
+    orcid: "0000-0002-5286-2185"
 preferred-citation:
   type: article
-  title: "ClimKern: A Python package for calculating radiative feedbacks..."
   journal: "Geoscientific Model Development"
   year: 2025
   doi: "10.5194/gmd-18-3065-2025"
 ```
 
 .footnote[
-Software citation gets its own session on Day 3 — this is the file that makes it work.
+Software citation gets its own session on Day 3. Note the **contributors** block — when
+someone lands a PR, add them here so they get credit beyond the commit log.
 ]
 
 ---

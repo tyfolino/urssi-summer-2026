@@ -241,6 +241,28 @@ rules." On a branch or tag you can require:
 even when several PRs land at once.
 
 ---
+# Releasing: don't forget the back-merge
+
+A common multi-branch setup: develop on `dev`, release from `main`.
+
+The trap: when you merge `dev → main` to cut a release, that merge commit lives **only on
+`main`**. If you never merge it back, `main` and `dev` drift apart — and tools that walk
+history (like `git describe` for versioning) can't see your release tags from `dev`.
+
+--
+
+**The fix — pick one each release:**
+
+* fast-forward `main` to `dev` so they point at the *same* commit, or
+* after releasing, merge `main` back into `dev` (the classic "back-merge")
+
+.footnote[
+Real story: ClimKern's `v1.2.0` tag sat on `main` only, so `dev` thought the latest version
+was `v1.1.0`. One back-merge fixed it. Mirror your release flow on both branches and it
+never happens.
+]
+
+---
 class: middle, center
 
 # More useful git commands
@@ -252,14 +274,16 @@ Branches are labels that track a series of commits — but what if you want a sp
 name for a *particular* commit (like a release)? You can [**tag**](https://git-scm.com/book/en/v2/Git-Basics-Tagging) it.
 
 ```console
-$ git tag -a v1.2 -m "ClimKern v1.2 release"   # tag the current commit
-$ git tag -a v1.1 <hash>                        # tag an older commit
-$ git push origin v1.2                          # push one tag
-$ git push origin --tags                        # push all tags
+$ git tag -a v1.2.1 -m "ClimKern v1.2.1 release"   # tag the current commit
+$ git tag -a v1.2.0 <hash>                          # tag an older commit
+$ git push origin v1.2.1                            # push one tag
+$ git push origin --tags                            # push all tags
 ```
 
 .footnote[
-Tags are how ClimKern's releases map to Zenodo DOIs — each tagged version gets archived.
+In ClimKern, that one tag does a *lot*: `setuptools-scm` reads it to set the package
+version, and publishing the release archives it to Zenodo (a DOI) and pushes to PyPI.
+Tag once, everything downstream follows.
 ]
 
 ---
