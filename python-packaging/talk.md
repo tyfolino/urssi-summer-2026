@@ -137,7 +137,7 @@ There should be one-- and preferably only one --obvious way to do it.
 ---
 # Next steps: packaging your code
 
-.huge[Maybe not so much. :(]
+.huge[Maybe not so much.]
 
 <p style="text-align:center;">
    <a href="https://github.com/scientific-python/cookie">
@@ -155,7 +155,7 @@ The .blue[good news]: Python packaging has improved .bold[dramatically] in the l
 ]
 
 * It has never been easier to point a package manager at some code — locally or on the
-  internet — and get working Python installed regardless of OS or architecture. A small **miracle**.
+  internet — and get working Python installed regardless of OS or architecture.
 
 .huge[
 The .red[bad news]: Python packaging has expanded .bold[dramatically] in the last ~6 years
@@ -406,8 +406,8 @@ Successfully installed mypackage-0.1.0
 ```
 
 .large[
-Now `import mypackage` works **anywhere** your environment is active — no `sys.path`,
-no relative paths. 🎉
+Now `import mypackage` works anywhere your environment is active — no `sys.path`,
+no relative paths.
 ]
 
 ---
@@ -776,7 +776,7 @@ lore, **follow and engage** with the teams building the tools.
 Find and collaborate with Research Software Engineers (RSEs).
 
 Most scientists don't get excited about packaging tools — we just want things to work.
-RSEs make that easier and are *super* knowledgeable.
+RSEs make that easier, and they know this landscape far better than we do.
 ]
 
 <p style="text-align:center;">
@@ -817,4 +817,4 @@ count: false
 
 # The end.
 
-Copy the skeleton · `pip install mypackage` · build · publish 🚀
+Copy the skeleton · `pip install mypackage` · build · publish
