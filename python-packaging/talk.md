@@ -18,10 +18,10 @@ June 8th, 2026
 
 .kol-1-2[
 .large[
-* Climate scientist — I study climate feedbacks and radiative transfer
+* Climate scientist: my work focuses on the threat of compound flooding on the NJ powergrid
 * Author of [**ClimKern**](https://github.com/tyfolino/climkern), a Python package for
   computing radiative feedbacks with climate-model kernels
-* Started as analysis scripts in 2022; now a published, citable tool used by other groups
+* Started as analysis scripts in 2022; now a published, citable tool used by other groups thanks to a previous iteration of this school
 * I care about **reusable** open science so we can build on each other's work
 ]
 ]
@@ -29,9 +29,7 @@ June 8th, 2026
 .large[
 **How this talk works:**
 
-We'll learn the mechanics on a tiny *generic* package you can copy to your own work...
-
-...and I'll point to my real package, **ClimKern**, to show what it looks like *in the wild*.
+We'll learn the mechanics on a tiny *generic* package you can copy to your own work and use ClimKern as an example.
 ]
 ]
 
@@ -41,7 +39,7 @@ URSSI talk and [Kyle Niemeyer](https://kyleniemeyer.github.io/research-software-
 ]
 
 ---
-# The hypothetical workflow of a typical scientist
+# The typical workflow
 
 .large[
 1. Work on an idea for a paper with collaborators
