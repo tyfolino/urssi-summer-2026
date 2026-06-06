@@ -19,7 +19,7 @@ June 8th, 2026
 .kol-1-2[
 .large[
 * Climate scientist: my work focuses on the threat of compound flooding on the NJ powergrid
-* Author of [**ClimKern**](https://github.com/tyfolino/climkern), a Python package for
+* Author of [ClimKern](https://github.com/tyfolino/climkern), a Python package for
   computing radiative feedbacks with climate-model kernels
 * Started as analysis scripts in 2022; now a published, citable tool used by other groups thanks to a previous iteration of this school
 * I care about **reusable** open science so we can build on each other's work
@@ -71,7 +71,7 @@ from stats import mean   # our own helper function
 ```
 
 * This is *already better* than one giant file
-* But now things are tied to a relative path on **your** computer, and break the moment you
+* But now things are tied to a relative path on *your* computer, and break the moment you
   move or rename anything
 
 .large[We can do much better — by making our code a **package**.]
@@ -161,7 +161,7 @@ The .blue[good news]: Python packaging has improved .bold[dramatically] in the l
 The .red[bad news]: Python packaging has expanded .bold[dramatically] in the last ~6 years
 ]
 
-* By creating standards, the PyPA enabled an ecosystem of **build backends** (good!)
+* By creating standards, the PyPA enabled an ecosystem of build backends (good!)
 * ...which means we now have to make a design choice (hard for beginners)
 
 ---
@@ -212,7 +212,7 @@ We'll use **`hatchling`** below — it's the simplest modern default. (ClimKern 
 
 .footnote[
 You rarely build by hand for local work — `pip install .` does it for you. You build
-explicitly when you're ready to **publish**.
+explicitly when you're ready to publish.
 ]
 
 ---
@@ -271,6 +271,67 @@ whatever happens to be in the current folder — so you catch "forgot to include
 ]
 
 ---
+# Importing within your package
+
+.large[
+Inside a package, modules refer to each other with imports — two flavors:
+]
+
+```python
+# src/mypackage/solvers/linear.py   — inside the "solvers" subpackage
+from mypackage.stats import mean    # absolute: full path from the top
+from ..stats import mean            # relative: ".." is the parent package
+from .util import scale             # relative: "." is this subpackage
+```
+
+.large[
+`__init__.py` decides the **public API** — what `import mypackage` actually exposes:
+]
+
+```python
+# src/mypackage/__init__.py
+from .stats import mean, median     # now usable as mypackage.mean
+```
+
+.footnote[
+Prefer *absolute* imports for clarity; *relative* imports keep a package self-contained when
+it's renamed. Pick one style and stay consistent.
+]
+
+---
+# Bigger packages: subpackages & data files
+
+.kol-1-2[
+.large[
+A package can nest **subpackages** (each with its own `__init__.py`) and ship non-code files
+right alongside the modules.
+]
+]
+.kol-1-2[
+```console
+src/mypackage/
+├── __init__.py
+├── stats.py
+├── solvers/          # a subpackage
+│   ├── __init__.py
+│   ├── linear.py
+│   └── util.py
+└── data/
+    └── coeffs.csv    # bundled data
+```
+]
+
+.large[
+Small reference data can travel *inside* the wheel. Large data (gigabytes) is better
+downloaded on demand.
+]
+
+.footnote[
+.blue[In the wild:] ClimKern's kernels are multi-GB, so it *downloads* them from Zenodo
+(`python -m climkern download`) instead of bundling them in the package.
+]
+
+---
 # `pyproject.toml`: what is `.toml`?
 
 .large[
@@ -284,7 +345,7 @@ A plain text format of `key = value` settings grouped under `[section]` headers 
 ---
 # `pyproject.toml`: how it gets built
 
-.large[Two lines tell tools **how** to build your package:]
+.large[Two lines tell tools *how* to build your package:]
 
 ```toml
 [build-system]
@@ -300,6 +361,9 @@ build-backend = "hatchling.build"     # ...and how to call it
 .footnote[
 You almost never interact with the backend directly — `pip` and `build` talk to it for you.
 Swap `hatchling` for `setuptools` and everything else below is identical.
+
+.blue[In the wild:] ClimKern recently retired its old `setup.py` shim and now builds from
+`pyproject.toml` alone (with `setuptools`).
 ]
 
 ---
@@ -322,6 +386,9 @@ authors = [
 .footnote[
 `license = "MIT"` is an [SPDX identifier](https://spdx.org/licenses/) — a standard short
 code for a license (the modern way, since PEP 639).
+
+.blue[In the wild:] ClimKern doesn't hard-code its `version` at all — `setuptools-scm` reads
+it straight from the latest `git` tag.
 ]
 
 ---
@@ -348,7 +415,7 @@ test = ["pytest"]       #  ->  pip install "mypackage[test]"
 ```
 
 .footnote[
-Pin loosely (`>=`) for a **library** so it plays nicely with others' projects.
+Pin loosely (`>=`) for a *library* so it plays nicely with others' projects.
 ]
 
 ---
@@ -373,6 +440,9 @@ Issues = "https://github.com/you/mypackage/issues"
 .footnote[
 **Classifiers** are standard tags ([full list](https://pypi.org/classifiers/)); **URLs**
 become the handy links in the sidebar on PyPI.
+
+.blue[In the wild:] ClimKern's latest release added exactly this block — it's what fills out
+its PyPI sidebar.
 ]
 
 ---
@@ -389,7 +459,7 @@ testpaths = ["tests"]
 ```
 
 .footnote[
-One file for packaging **and** your linter, formatter, test runner, type checker... it's the
+One file for packaging *and* your linter, formatter, test runner, type checker... it's the
 center of a modern Python project.
 ]
 
@@ -414,7 +484,7 @@ no relative paths.
 # Packaging doesn't slow you down: editable installs
 
 .huge[
-Use an **[editable install](https://pip.pypa.io/en/latest/topics/local-project-installs/#editable-installs)** while developing:
+Use an [editable install](https://pip.pypa.io/en/latest/topics/local-project-installs/#editable-installs) while developing:
 ]
 
 ```console
@@ -426,6 +496,31 @@ This links your source folder into the environment, so **edits take effect immed
 no reinstall needed (unless you change `pyproject.toml`).
 
 Develop your code and use it at the same time.
+]
+
+---
+# Make a module runnable: the `main()` idiom
+
+.large[
+Put your logic in functions, then guard the entry point so the file can be *imported* and
+run directly:
+]
+
+```python
+# src/mypackage/cli.py
+def main():
+    ...                        # do the work
+
+if __name__ == "__main__":     # true only when executed, not imported
+    main()
+```
+
+* `import mypackage.cli` → defines `main()`, runs nothing
+* `python -m mypackage.cli` → `__name__ == "__main__"`, so `main()` fires
+
+.footnote[
+This is the hook that `[project.scripts]` (next) and ClimKern's `python -m climkern` both
+rely on.
 ]
 
 ---
@@ -450,37 +545,10 @@ $ mypackage --help        # now available on your PATH
 ]
 
 ---
-class: middle, center
-
-# Meet a real package: ClimKern
-
-### the same ideas, in the wild
-
----
-# A real package levels up: ClimKern v1.2.1
-
-.large[
-ClimKern is a real, published package — and watching it evolve shows these ideas in action.
-Here's what I changed for its latest release:
-]
-
-| Before | After |
-|:--|:--|
-| `setup.py` shim | gone — `pyproject.toml` only |
-| `version = "1.2"` (hardcoded) | **dynamic** — read from git tags via `setuptools-scm` |
-| no `license` field | `license = "MIT"` (SPDX) |
-| no classifiers / URLs | full PyPI **discovery metadata** |
-
-.footnote[
-"Dynamic version" = the version comes from your `git tag` instead of being typed into the
-file. None of this was a rewrite — just normal maintenance as best practices move.
-]
-
----
 # Don't forget the tests
 
 .large[
-Because a package is installed, its tests ship with it and run anywhere:
+Because ClimKern is installed as a package, its tests ship with it and run anywhere:
 ]
 
 ```console
@@ -498,7 +566,7 @@ fits — which is exactly what frees up human code review (tomorrow's session!).
 
 .large[
 ClimKern regrids data with [**ESMPy**](https://earthsystemmodeling.org/esmpy/), which wraps
-a compiled Fortran/C++ library and is **not on PyPI**.
+a compiled Fortran/C++ library and is not on PyPI.
 ]
 
 So its install instructions start with conda:
@@ -518,9 +586,9 @@ This is extremely common in scientific Python — and it's why we need **conda-f
 
 .large[
 The `conda` family ([`conda`](https://docs.conda.io/), [`mamba`](https://mamba.readthedocs.io/),
-[`pixi`](https://prefix.dev/docs/pixi/)) are **general-purpose** package managers.
+[`pixi`](https://prefix.dev/docs/pixi/)) are general-purpose package managers.
 
-Instead of only Python packages, they install **all** dependencies (including Python and
+Instead of only Python packages, they install all dependencies (including Python and
 compiled libraries) as OS- and architecture-specific **prebuilt binaries**.
 ]
 
@@ -586,7 +654,7 @@ Historically you'd run `twine upload`. In 2026 there's a better way — see "Wha
 # Reproducibility: lock files
 
 .large[
-A **library** should support a **range** of dependency versions (reusable). But an
+A library should support a range of dependency versions (reusable). But an
 *analysis* you want to reproduce exactly needs a **lock file**: a hash-level record of every
 dependency, pinned.
 ]
@@ -619,7 +687,7 @@ walks through it end to end.
 
 .kol-1-2[
 .center.width-95[[![zenodo-landing-page](figures/zenodo-landing-page.png)](https://zenodo.org/)]
-.center[A DOI for the project **and** each version]
+.center[A DOI for the project *and* each version]
 ]
 .kol-1-2[
 .large[
@@ -679,6 +747,30 @@ share your work.
 ]
 
 ---
+# A closer look: the CHANGELOG
+
+.large[
+A [CHANGELOG](https://keepachangelog.com/) is the human-readable companion to your git log —
+what changed, grouped for readers, newest first.
+]
+
+```markdown
+## [Unreleased]
+
+## [1.2.1] - 2026-05-01
+### Added
+- `download` subcommand for fetching kernels
+### Fixed
+- regridding edge case at the poles
+### Changed / Deprecated / Removed / Security
+```
+
+.large[
+Version numbers follow [**semantic versioning**](https://semver.org/) — `MAJOR.MINOR.PATCH`,
+i.e. breaking / feature / fix.
+]
+
+---
 class: middle, center
 
 # What's new in 2026
@@ -729,7 +821,7 @@ $ uvx ruff check .            # run a tool without installing it (like pipx)
 .large[
 * **2FA is mandatory** on PyPI for all maintainers
 * **[Trusted Publishing](https://docs.pypi.org/trusted-publishers/)** — publish straight
-  from GitHub Actions using OpenID Connect, with **no API tokens** to manage or leak
+  from GitHub Actions using OpenID Connect, with no API tokens to manage or leak
 * **PEP 740 attestations** — releases can carry signed provenance proving *which* workflow
   built them
 ]
