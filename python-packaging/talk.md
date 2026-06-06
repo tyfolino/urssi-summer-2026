@@ -137,63 +137,26 @@ There should be one-- and preferably only one --obvious way to do it.
 ---
 # Next steps: packaging your code
 
-.huge[Maybe not so much.]
+.large[
+Well... not quite — the ecosystem has several **build backends**:
+]
 
 <p style="text-align:center;">
    <a href="https://github.com/scientific-python/cookie">
-      <img src="figures/cookie-backend-options.png" width=50%>
+      <img src="figures/cookie-backend-options.png" width=38%>
    </a>
 </p>
 
-.center.huge[You might be asking: why is there more than one?]
-
----
-# Next steps: packaging your code
-
-.huge[
-The .blue[good news]: Python packaging has improved .bold[dramatically] in the last ~6 years
+.large[
+The .blue[good news]: you can almost always default to the simplest one.
 ]
 
-* It has never been easier to point a package manager at some code — locally or on the
-  internet — and get working Python installed regardless of OS or architecture.
-
-.huge[
-The .red[bad news]: Python packaging has expanded .bold[dramatically] in the last ~6 years
-]
-
-* By creating standards, the PyPA enabled an ecosystem of build backends (good!)
-* ...which means we now have to make a design choice (hard for beginners)
-
----
-# Next steps: packaging your code
-
-.huge[
-The .green[okay news]: you can probably default to the simplest thing
-]
-
-* **pure Python**: [`hatchling`](https://hatch.pypa.io/) (modern, lightweight) or [`setuptools`](https://setuptools.pypa.io/) (the classic default)
+* **pure Python**: [`hatchling`](https://hatch.pypa.io/) or [`setuptools`](https://setuptools.pypa.io/) (the classic)
 * **compiled extensions** (C/C++/Fortran): [`scikit-build-core`](https://scikit-build-core.readthedocs.io/) + [`pybind11`](https://github.com/pybind/pybind11)
 
-.kol-1-2[
-<p style="text-align:center;">
-   <a href="https://packaging.python.org/en/latest/tutorials/packaging-projects/">
-      <img src="figures/pypa-packaging-tutorial.png" width=100%>
-   </a>
-</p>
-.caption[[PyPA Packaging Projects Tutorial](https://packaging.python.org/en/latest/tutorials/packaging-projects/)]
-]
-.kol-1-2[
-<p style="text-align:center;">
-   <a href="https://learn.scientific-python.org/development/guides/packaging-simple/">
-      <img src="figures/scientific-python-packaging.png" width=100%>
-   </a>
-</p>
-.caption[[Scientific Python Development Guide](https://learn.scientific-python.org/development/)]
-]
-
 .footnote[
-We'll use **`hatchling`** below — it's the simplest modern default. (ClimKern happens to use
-`setuptools`; both are perfectly valid.)
+Packaging has improved *dramatically* in the last ~6 years. We'll use `hatchling` below — the
+simplest modern default. (ClimKern uses `setuptools`; both are perfectly valid.)
 ]
 
 ---
@@ -296,39 +259,6 @@ from .stats import mean, median     # now usable as mypackage.mean
 .footnote[
 Prefer *absolute* imports for clarity; *relative* imports keep a package self-contained when
 it's renamed. Pick one style and stay consistent.
-]
-
----
-# Bigger packages: subpackages & data files
-
-.kol-1-2[
-.large[
-A package can nest **subpackages** (each with its own `__init__.py`) and ship non-code files
-right alongside the modules.
-]
-]
-.kol-1-2[
-```console
-src/mypackage/
-├── __init__.py
-├── stats.py
-├── solvers/          # a subpackage
-│   ├── __init__.py
-│   ├── linear.py
-│   └── util.py
-└── data/
-    └── coeffs.csv    # bundled data
-```
-]
-
-.large[
-Small reference data can travel *inside* the wheel. Large data (gigabytes) is better
-downloaded on demand.
-]
-
-.footnote[
-.blue[In the wild:] ClimKern's kernels are multi-GB, so it *downloads* them from Zenodo
-(`python -m climkern download`) instead of bundling them in the package.
 ]
 
 ---
@@ -499,6 +429,64 @@ Develop your code and use it at the same time.
 ]
 
 ---
+# Your first package: the whole recipe
+
+.large[
+**1.** Put your code under `src/mypackage/` with an `__init__.py`
+
+**2.** Add a minimal `pyproject.toml`:
+]
+
+```toml
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mypackage"
+version = "0.1.0"
+```
+
+.large[
+**3.** `python -m pip install --editable .` — now `import mypackage` works anywhere
+]
+
+.center.large.bold[That's a real, installable package. Everything else builds on this.]
+
+---
+# As it grows: subpackages & data files
+
+.kol-1-2[
+.large[
+A package can nest **subpackages** (each with its own `__init__.py`) and ship non-code files
+right alongside the modules.
+]
+]
+.kol-1-2[
+```console
+src/mypackage/
+├── __init__.py
+├── stats.py
+├── solvers/          # a subpackage
+│   ├── __init__.py
+│   ├── linear.py
+│   └── util.py
+└── data/
+    └── coeffs.csv    # bundled data
+```
+]
+
+.large[
+Small reference data can travel *inside* the wheel. Large data (gigabytes) is better
+downloaded on demand.
+]
+
+.footnote[
+.blue[In the wild:] ClimKern's kernels are multi-GB, so it *downloads* them from Zenodo
+(`python -m climkern download`) instead of bundling them in the package.
+]
+
+---
 # Make a module runnable: the `main()` idiom
 
 .large[
@@ -665,23 +653,6 @@ dependency, pinned.
 .large[Keep the lock file in version control alongside the analysis.]
 
 ---
-# Aside: compiled extensions
-
-.large[
-`mypackage` and ClimKern are pure Python, but many scientific packages ship C/C++/Fortran.
-With modern tooling that's only a little extra work:
-]
-
-* Swap the build backend to [`scikit-build-core`](https://scikit-build-core.readthedocs.io/) + [`pybind11`](https://github.com/pybind/pybind11)
-* Add a `CMakeLists.txt`
-* conda-forge (or wheels with bundled binaries) handles distribution
-
-.footnote[
-When you need this, the [Scientific Python guide](https://learn.scientific-python.org/development/)
-walks through it end to end.
-]
-
----
 # Zenodo: a versioned archive of *everything*
 .center.large[code, documents, data products, data sets — each gets a DOI]
 
@@ -801,21 +772,6 @@ $ uvx ruff check .            # run a tool without installing it (like pipx)
 ]
 
 ---
-# New packaging standards worth knowing
-
-.large[
-* **PEP 639** — declare your license as an [SPDX expression](https://spdx.org/licenses/):
-  `license = "MIT"` + `license-files = ["LICENSE"]` (replaces the old table form and the
-  license classifiers)
-
-* **PEP 735** — `[dependency-groups]` in `pyproject.toml`: a standard way to declare
-  dev/test/docs dependencies that *aren't* published as installable extras
-
-* **PEP 751** — `pylock.toml`: a **standardized** lock-file format, so lock files aren't
-  locked to one tool
-]
-
----
 # Publishing to PyPI in 2026
 
 .large[
@@ -860,23 +816,6 @@ lore, **follow and engage** with the teams building the tools.
    </a>
 </p>
 .caption[[Scientific Python Library Development Guide](https://learn.scientific-python.org/development/)]
-
----
-# Recommendation: work with RSEs
-
-.large[
-Find and collaborate with Research Software Engineers (RSEs).
-
-Most scientists don't get excited about packaging tools — we just want things to work.
-RSEs make that easier, and they know this landscape far better than we do.
-]
-
-<p style="text-align:center;">
-   <a href="https://society-rse.org/">
-      <img src="figures/rse-page.png" width=35%>
-   </a>
-</p>
-.caption[[Society of Research Software Engineering](https://society-rse.org/)]
 
 ---
 # Summary
