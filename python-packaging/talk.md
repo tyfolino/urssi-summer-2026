@@ -100,20 +100,26 @@ from context.
 ]
 
 ---
-# Before packaging: manage your environment
+# Before packaging: work in a virtual environment
 
 .large[
-Never install project dependencies into your system Python. **Isolate** each project so its
-dependencies can't clash with another's.
+A **virtual environment** is a private folder with its own copy of Python and packages — so
+one project's dependencies can never clash with another's (or with your system Python).
 ]
 
-* `python -m venv .venv` + `pip` — built in, lightweight, pure-Python
-* `conda` / `mamba` — needed when dependencies aren't pure Python (compilers, C libraries)
-* `pipx` / `uvx` — for installing command-line *applications* in isolation
+.large[Create one, switch it on, then install into it:]
+
+```console
+$ python -m venv .venv         # create it — a folder named .venv
+$ source .venv/bin/activate    # switch it on (Windows: .venv\Scripts\activate)
+$ pip install numpy            # installs into THIS project only
+```
+
+.large[Your prompt shows `(.venv)` while it's active. Make a fresh one per project.]
 
 .footnote[
-A **virtual environment** is just a self-contained folder with its own Python and packages.
-Activate it, and `pip install` only touches *that* project.
+Other tools do the same job: `conda` / `mamba` when dependencies aren't pure Python
+(compilers, C libraries), and `pipx` / `uvx` for installing command-line *apps* in isolation.
 ]
 
 ---
@@ -533,40 +539,28 @@ $ mypackage --help        # now available on your PATH
 ]
 
 ---
-# Don't forget the tests
-
-.large[
-Because ClimKern is installed as a package, its tests ship with it and run anywhere:
-]
-
-```console
-$ pip install "climkern[test]"
-$ pytest -v --pyargs climkern
-```
-
-.large[
-Good tests + CI mean a new contributor gets **automatic feedback** on whether their change
-fits — which is exactly what frees up human code review (tomorrow's session!).
-]
-
----
 # The dependency reality: not everything `pip`-installs
 
 .large[
-ClimKern regrids data with [**ESMPy**](https://earthsystemmodeling.org/esmpy/), which wraps
-a compiled Fortran/C++ library and is not on PyPI.
+Some scientific packages depend on compiled, non-Python libraries (Fortran/C++ wrappers,
+GPU stacks) that *aren't on PyPI* — so `pip install` alone can't get you there.
 ]
 
-So its install instructions start with conda:
+The fix is usually to grab those pieces from conda first:
 
 ```console
-$ conda create -n ck_env python=3.11 esmpy -c conda-forge
-$ conda activate ck_env
-$ pip install climkern
+$ conda create -n myenv python=3.11 <compiled-dep> -c conda-forge
+$ conda activate myenv
+$ pip install mypackage
 ```
 
 .large[
 This is extremely common in scientific Python — and it's why we need **conda-forge**.
+]
+
+.footnote[
+.blue[In the wild:] ClimKern's regridder, [ESMPy](https://earthsystemmodeling.org/esmpy/),
+is a compiled Fortran/C++ library installed exactly this way.
 ]
 
 ---
