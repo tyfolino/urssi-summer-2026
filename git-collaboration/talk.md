@@ -97,7 +97,7 @@ class: middle, center
 ---
 # An individual workflow (without a remote)
 
-.large[commit, commit, commit .....]
+.large[The everyday rhythm: **edit → add → commit**, over and over.]
 
 ```console
 $ git init
@@ -113,7 +113,7 @@ $ git commit -m 'add readme with package description'
 ---
 # An individual workflow (with a remote)
 
-.large[commit push, commit commit push, commit push .....]
+.large[Same rhythm, with one more step to share it: **edit → add → commit → push**.]
 
 ```console
 $ git remote add origin git@github.com:tyfolino/climkern.git
@@ -226,11 +226,11 @@ co-develop a feature branch with a collaborator outside of `main`.
 
 <br>
 
-⛔️ Never send a pull request from `main` 🙅
+**Never send a pull request from `main`.**
 
 --
 
-⛔️ Never send a large pull request without notice 🙅
+**Never send a large pull request without warning the team first.**
 
 ---
 # Forking workflow
@@ -339,7 +339,7 @@ Tag once, everything downstream follows.
 # Amending a commit
 
 .large[
-Oh no! I made a typo in my commit message!
+Made a typo in your last commit message — or forgot to stage a file?
 ]
 
 `git commit --amend` is useful for both fixing commit messages and for adding files that
@@ -382,7 +382,7 @@ $ git cherry-pick <hash>
 # Stashing changes
 
 .large[
-Oh no! I started making changes but I'm not on the feature branch I thought I was!
+Started editing, then realized you're on the wrong branch?
 ]
 
 `git stash` hides the changes in your working tree so you can bring them back out once
