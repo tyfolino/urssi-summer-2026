@@ -149,24 +149,6 @@ https://arfc.github.io/manual/guides/pull_requests
 ]
 
 ---
-# ClimKern is set up to make reviews easy
-
-The project we'll review already has the infrastructure from the previous slide:
-
-.large[
-* [`.pre-commit-config.yaml`](https://github.com/tyfolino/climkern/blob/dev/.pre-commit-config.yaml) — **ruff** + **black** run automatically, so no style debates
-* **CI** runs the test suite on every PR
-* `climkern/tests/` with `pytest` — `pytest -v --pyargs climkern`
-* A `README` that says what ClimKern *is* (and isn't)
-* Labeled issues so contributors can find a good first one
-]
-
-.footnote[
-Because the bots handle style and tests, the human review can focus on the *science* and
-the *API*.
-]
-
----
 # Anatomy of a PR review on GitHub
 
 .center.width-70[![a GitHub PR showing files changed, an inline comment, a suggestion, and approve](figures/pr-anatomy.svg)]
