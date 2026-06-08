@@ -103,66 +103,46 @@ from context.
 # Before packaging: work in a virtual environment
 
 .large[
-A **virtual environment** is a private folder with its own copy of Python and packages — so
-one project's dependencies can never clash with another's (or with your system Python).
+Kyle covered this in **Managing environments** this morning — so just the one rule that
+matters once we start packaging:
 ]
 
-.large[Create one, switch it on, then install into it:]
+.center.large.bold[Always install your package into an *active* environment — one per project.]
 
-```console
-$ python -m venv .venv         # create it — a folder named .venv
-$ source .venv/bin/activate    # switch it on (Windows: .venv\Scripts\activate)
-$ pip install numpy            # installs into THIS project only
-```
-
-.large[Your prompt shows `(.venv)` while it's active. Make a fresh one per project.]
+.large[
+That isolates each project's dependencies (and your in-development package itself) from
+every other project and from system Python — no clashes, no "works on my machine."
+]
 
 .footnote[
-Other tools do the same job: `conda` / `mamba` when dependencies aren't pure Python
-(compilers, C libraries), and `pipx` / `uvx` for installing command-line *apps* in isolation.
+`venv`, `conda` / `mamba`, or `uv` all give you this — whatever Kyle set you up with works
+the same way here.
 ]
 
 ---
 # Next steps: packaging your code
 
-.huge[
-* The real goal: .bold[your code becomes installable]
-   - Anywhere your environment is active, you can `import mypackage`
-   - No more `sys.path` hacks or "works on my machine"
-]
-
 .large[
-Following the Zen of Python, this should be one obvious way, right?
+The goal: .bold[your code becomes installable.] Anywhere your environment is active,
+you can `import mypackage` — no more `sys.path` hacks or "works on my machine."
 ]
 
-```console
-$ python -c 'import this' | grep obvious
-There should be one-- and preferably only one --obvious way to do it.
-```
-
----
-# Next steps: packaging your code
-
-.large[
-Well... not quite — the ecosystem has several **build backends**:
-]
+.large[There's no single blessed tool; the ecosystem has several **build backends**:]
 
 <p style="text-align:center;">
    <a href="https://github.com/scientific-python/cookie">
-      <img src="figures/cookie-backend-options.png" width=38%>
+      <img src="figures/cookie-backend-options.png" width=33%>
    </a>
 </p>
 
-.large[
-The .blue[good news]: you can almost always default to the simplest one.
-]
+.large[The .blue[good news]: you can almost always default to the simplest one.]
 
 * **pure Python**: [`hatchling`](https://hatch.pypa.io/) or [`setuptools`](https://setuptools.pypa.io/) (the classic)
 * **compiled extensions** (C/C++/Fortran): [`scikit-build-core`](https://scikit-build-core.readthedocs.io/) + [`pybind11`](https://github.com/pybind/pybind11)
 
 .footnote[
-Packaging has improved *dramatically* in the last ~6 years. We'll use `hatchling` below — the
-simplest modern default. (ClimKern uses `setuptools`; both are perfectly valid.)
+We'll use `hatchling` below — the simplest modern default. (ClimKern uses `setuptools`;
+both are perfectly valid.)
 ]
 
 ---
@@ -352,33 +332,9 @@ test = ["pytest"]       #  ->  pip install "mypackage[test]"
 
 .footnote[
 Pin loosely (`>=`) for a *library* so it plays nicely with others' projects.
-]
 
----
-# Project metadata: how people find it
-
-.large[Finally, **discovery** metadata — this is what fills out your PyPI page:]
-
-```toml
-keywords = ["statistics", "research", "example"]
-
-classifiers = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: Science/Research",
-    "Programming Language :: Python :: 3",
-]
-
-[project.urls]
-Homepage = "https://github.com/you/mypackage"
-Issues = "https://github.com/you/mypackage/issues"
-```
-
-.footnote[
-**Classifiers** are standard tags ([full list](https://pypi.org/classifiers/)); **URLs**
-become the handy links in the sidebar on PyPI.
-
-.blue[In the wild:] ClimKern's latest release added exactly this block — it's what fills out
-its PyPI sidebar.
+.blue[Also worth adding:] `keywords`, `classifiers`, and `[project.urls]` — they fill out
+your PyPI page (ClimKern's latest release added exactly this block).
 ]
 
 ---
@@ -539,14 +495,18 @@ $ mypackage --help        # now available on your PATH
 ]
 
 ---
-# The dependency reality: not everything `pip`-installs
+# When `pip` isn't enough: the `conda` family
 
 .large[
 Some scientific packages depend on compiled, non-Python libraries (Fortran/C++ wrappers,
 GPU stacks) that *aren't on PyPI* — so `pip install` alone can't get you there.
 ]
 
-The fix is usually to grab those pieces from conda first:
+.large[
+The `conda` family ([`conda`](https://docs.conda.io/), [`mamba`](https://mamba.readthedocs.io/),
+[`pixi`](https://prefix.dev/docs/pixi/)) installs **prebuilt binaries** — Python *and* compiled
+libraries (compilers, Fortran, even the full CUDA stack). Grab those first, then `pip`:
+]
 
 ```console
 $ conda create -n myenv python=3.11 <compiled-dep> -c conda-forge
@@ -554,30 +514,30 @@ $ conda activate myenv
 $ pip install mypackage
 ```
 
-.large[
-This is extremely common in scientific Python — and it's why we need **conda-forge**.
-]
-
 .footnote[
+The trade-off vs. `pip`: no matching prebuilt binary means no automatic build-from-source fallback.
+
 .blue[In the wild:] ClimKern's regridder, [ESMPy](https://earthsystemmodeling.org/esmpy/),
 is a compiled Fortran/C++ library installed exactly this way.
 ]
 
 ---
-# Distributing packages: [conda-forge](https://conda-forge.org/)
+# Publishing your package to conda-forge
 
 .large[
-The `conda` family ([`conda`](https://docs.conda.io/), [`mamba`](https://mamba.readthedocs.io/),
-[`pixi`](https://prefix.dev/docs/pixi/)) are general-purpose package managers.
-
-Instead of only Python packages, they install all dependencies (including Python and
-compiled libraries) as OS- and architecture-specific **prebuilt binaries**.
+To let users `conda install` your package, submit a **recipe** to
+[`conda-forge/staged-recipes`](https://github.com/conda-forge/staged-recipes):
 ]
 
-* Popular in scientific computing because arbitrary binaries can be hosted — compilers,
-  Fortran, even the full NVIDIA CUDA stack
-* The trade-off: if there's no matching prebuilt binary, there's no automatic fallback to
-  building from source (unlike `pip` + an sdist)
+* Write a small `meta.yaml` (name, version, source URL + hash, dependencies) — tools like
+  [`grayskull`](https://github.com/conda/grayskull) generate it from your PyPI release
+* Open a PR; once reviewed and merged, conda-forge auto-builds binaries for every platform
+* You get a **feedstock** repo that re-builds automatically each time you publish a new version
+
+.footnote[
+Publish to PyPI *first* — most recipes just point at your PyPI sdist, and conda-forge keeps
+itself in sync from there.
+]
 
 ---
 # Going further: distributing via Git
@@ -647,49 +607,39 @@ dependency, pinned.
 .large[Keep the lock file in version control alongside the analysis.]
 
 ---
-# Zenodo: a versioned archive of *everything*
-.center.large[code, documents, data products, data sets — each gets a DOI]
+# Make your software citable
+.center.large[Kyle's Day 3 *Open science & software citation* goes deep — here's the packaging hook.]
 
-.kol-1-2[
-.center.width-95[[![zenodo-landing-page](figures/zenodo-landing-page.png)](https://zenodo.org/)]
-.center[A DOI for the project *and* each version]
-]
 .kol-1-2[
 .large[
-ClimKern's releases are archived automatically from GitHub:
-
-**DOI:** [10.5281/zenodo.10291284](https://doi.org/10.5281/zenodo.10291284)
+**[Zenodo](https://zenodo.org/)** archives each GitHub release and mints a **DOI**:
 
 Tag a release → Zenodo mints a DOI → put it in your README and papers.
+
+ClimKern: [10.5281/zenodo.10291284](https://doi.org/10.5281/zenodo.10291284)
 ]
 ]
-
----
-# Make your software citable: `CITATION.cff`
-
+.kol-1-2[
 .large[
-A [`CITATION.cff`](https://citation-file-format.github.io/) file tells GitHub (and humans)
-exactly how to cite your software. GitHub adds a "Cite this repository" button.
+A [`CITATION.cff`](https://citation-file-format.github.io/) file tells GitHub *how* to cite
+your software (adds a "Cite this repository" button):
 ]
-
 ```yaml
 cff-version: 1.2.0
 title: "ClimKern"
-version: "1.2.1"
-doi: "10.5281/zenodo.10291284"   # concept DOI — always resolves to latest
+doi: "10.5281/zenodo.10291284"
 authors:
   - family-names: "Janoski"
     given-names: "Tyler P."
-    orcid: "0000-0003-4344-355X"
-contributors:                    # credit the people who helped!
+contributors:        # credit your PR authors!
   - family-names: "Linke"
     given-names: "Olivia"
-    orcid: "0000-0002-5286-2185"
 ```
+]
 
 .footnote[
-Software citation gets its own session on Day 3. Note the **contributors** block — when
-someone lands a PR, add them here so they get credit beyond the commit log.
+The **contributors** block matters — when someone lands a PR, add them here so they get
+credit beyond the commit log.
 ]
 
 ---
@@ -701,7 +651,7 @@ A package is more than `.py` files. Reviewers and users look for:
 
 * **README** — what it is, how to install, a usage example
 * **LICENSE** — without one, others legally can't reuse it
-* **CHANGELOG** — human-readable version history (semantic versioning)
+* **[CHANGELOG](https://keepachangelog.com/)** — human-readable version history, newest first ([semantic versioning](https://semver.org/): `MAJOR.MINOR.PATCH`)
 * **CONTRIBUTING** — how to set up a dev environment and submit changes
 * **CODE_OF_CONDUCT** — expectations for the community
 * **CITATION.cff** — how to cite the software
@@ -712,72 +662,26 @@ share your work.
 ]
 
 ---
-# A closer look: the CHANGELOG
-
-.large[
-A [CHANGELOG](https://keepachangelog.com/) is the human-readable companion to your git log —
-what changed, grouped for readers, newest first.
-]
-
-```markdown
-## [Unreleased]
-
-## [1.2.1] - 2026-05-01
-### Added
-- `download` subcommand for fetching kernels
-### Fixed
-- regridding edge case at the poles
-### Changed / Deprecated / Removed / Security
-```
-
-.large[
-Version numbers follow [**semantic versioning**](https://semver.org/) — `MAJOR.MINOR.PATCH`,
-i.e. breaking / feature / fix.
-]
-
----
-class: middle, center
-
 # What's new in 2026
-
-### (the field has moved since the 2024 talks)
-
----
-# `uv`: one fast tool for the whole workflow
+.center[(the field has moved since the 2024 talks)]
 
 .large[
-[`uv`](https://docs.astral.sh/uv/) (from Astral, the `ruff` folks) is a Rust-based tool
-that has reshaped Python packaging since 2024 — it's *fast* and covers the whole lifecycle:
+[`uv`](https://docs.astral.sh/uv/) (from Astral, the `ruff` folks) is a fast Rust-based tool
+covering the whole lifecycle — an option, not a requirement:
 ]
 
 ```console
 $ uv venv                     # create a virtual environment
-$ uv pip install mypackage    # a drop-in, much faster pip
 $ uv add numpy                # add a dependency to pyproject.toml + lock
-$ uv lock                     # write a universal lock file (uv.lock)
 $ uv run pytest               # run in the project env, auto-synced
-$ uv build                    # build sdist + wheel
-$ uv publish                  # upload to PyPI
+$ uv build && uv publish      # build sdist + wheel, then upload to PyPI
 $ uvx ruff check .            # run a tool without installing it (like pipx)
 ```
 
-.footnote[
-`pip`, `hatch`, and `conda` all still work great — `uv` is an option, not a requirement.
-]
-
----
-# Publishing to PyPI in 2026
-
 .large[
-* **2FA is mandatory** on PyPI for all maintainers
-* **[Trusted Publishing](https://docs.pypi.org/trusted-publishers/)** — publish straight
-  from GitHub Actions using OpenID Connect, with no API tokens to manage or leak
-* **PEP 740 attestations** — releases can carry signed provenance proving *which* workflow
-  built them
-]
-
-.footnote[
-A few lines of GitHub Actions config replaces `twine upload` and a long-lived token.
+**Publishing is safer, too:** 2FA is now mandatory on PyPI, and
+[**Trusted Publishing**](https://docs.pypi.org/trusted-publishers/) lets GitHub Actions upload
+via OpenID Connect — no API tokens to manage or leak (goodbye, `twine upload`).
 ]
 
 ---
