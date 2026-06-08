@@ -123,26 +123,25 @@ the same way here.
 # Next steps: packaging your code
 
 .large[
-The goal: .bold[your code becomes installable.] Anywhere your environment is active,
-you can `import mypackage` — no more `sys.path` hacks or "works on my machine."
+The goal: .bold[your code becomes installable] — then `import mypackage` works anywhere your
+environment is active, no `sys.path` hacks.
 ]
 
-.large[There's no single blessed tool; the ecosystem has several **build backends**:]
+.large[
+You pick a **build backend** to do it, but can almost always default to the simplest:
+]
 
 <p style="text-align:center;">
    <a href="https://github.com/scientific-python/cookie">
-      <img src="figures/cookie-backend-options.png" width=33%>
+      <img src="figures/cookie-backend-options.png" width=27%>
    </a>
 </p>
-
-.large[The .blue[good news]: you can almost always default to the simplest one.]
 
 * **pure Python**: [`hatchling`](https://hatch.pypa.io/) or [`setuptools`](https://setuptools.pypa.io/) (the classic)
 * **compiled extensions** (C/C++/Fortran): [`scikit-build-core`](https://scikit-build-core.readthedocs.io/) + [`pybind11`](https://github.com/pybind/pybind11)
 
 .footnote[
-We'll use `hatchling` below — the simplest modern default. (ClimKern uses `setuptools`;
-both are perfectly valid.)
+We'll use `hatchling` below — the simplest modern default. (ClimKern uses `setuptools`; both are valid.)
 ]
 
 ---
