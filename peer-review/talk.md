@@ -21,10 +21,6 @@ June 9th, 2026
 * Demonstrate code review on a **real pull request** ([ClimKern #48](https://github.com/tyfolino/climkern/pull/48))
 ]
 
-.footnote[
-Adapted from [Madicken Munk](https://munkm.github.io/)'s 2024 URSSI lesson.
-]
-
 ---
 class: middle, center
 
@@ -176,59 +172,25 @@ the *API*.
 .center.width-70[![a GitHub PR showing files changed, an inline comment, a suggestion, and approve](figures/pr-anatomy.svg)]
 
 .footnote[
-The pieces you'll use live: the **Files changed** tab, **inline comments** on specific lines,
-a **Suggested change** (one click for the author to accept), and the **Approve** button.
+A lot lives on one screen — the next slide names the pieces you'll actually click.
 ]
 
 ---
-class: middle, center
-
-# Demo: reviewing a real PR
-
-### [ClimKern #48 — "CRE tiling and surface kernel"](https://github.com/tyfolino/climkern/pull/48)
-
----
-# The PR we'll review
-
-.large[
-[**ClimKern #48**](https://github.com/tyfolino/climkern/pull/48) — *CRE tiling and surface kernel*
-by Koh Kawaguchi
-]
-
-What it claims to do (from the description):
-
-* adds a `loc` argument to the tropospheric kernels to specify **TOA vs. surface**
-* reworks the cloud radiative effect (CRE) to use `make_clim` and `tile_data`, so `ctrl`
-  and `pert` can be **different sizes** (consistent with the clear-sky kernels)
-
-Stats: **1 file** changed (`climkern/frontend.py`), **+113 / −89**, no reviews yet.
-
---
-
-.large[Let's walk the 7-step approach against it, live. 👀]
-
----
-# Walking the steps on #48
+# GitHub's review tools
 
 .small[
-1. **Description** — Is "surface kernel support + CRE tiling" in scope for ClimKern? (Yes.)
-2. **Docs** — Do the docstrings explain the new `loc` argument and its allowed values?
-3. **Code** — Do I follow the `make_clim` / `tile_data` change? Where might shapes still
-   mismatch?
-4. **Tests** — `frontend.py` changed, but were tests added to `test_frontend.py` for the
-   surface case? *(This is the kind of gap review catches.)*
-5. **User impact** — Does adding `loc` change the **default** behavior for existing users
-   of the TOA path? Is it backward compatible?
-6. **Suggestions** — Anything repeated between the LW and SW paths that could be shared?
-7. **Try it** — Run the new surface-kernel path on the tutorial data and sanity-check.
+- **Files changed** — read the full diff; click a line number (or click-drag a range) to comment.
+- **Inline comments** — pin feedback to exact lines so the context is unambiguous.
+- **Suggested changes** — propose the precise edit; the author applies it with one click and keeps authorship.
+- **Start a review, then submit** — batch your comments and send them together as **Comment**, **Approve**, or **Request changes** (one notification, not a dozen).
+- **Resolve conversation** — collapse a thread once it's handled, so re-review stays focused.
 ]
 
---
+A *suggested change* is just a fenced block in a comment — GitHub turns it into a one-click commit:
 
-.footnote[
-.blue[Note to self:] if #48 has merged by June, swap in whatever PR is open on
-`tyfolino/climkern` that day — the steps are the same.
-]
+```suggestion
+kern = make_clim(ctrl, pert)
+```
 
 ---
 class: middle, center
@@ -258,7 +220,7 @@ Let's talk about responding to a review.
 ]
 
 ---
-# A 2026 note: AI-assisted review
+# AI-assisted review
 
 .large[
 Tools like GitHub Copilot and Claude can now **pre-review** a PR — summarizing the diff,
@@ -267,16 +229,16 @@ flagging obvious bugs, and suggesting tests.
 
 Used well, they're a **first pass** that frees humans for the judgment calls:
 
-* ✅ great for: catching typos, missing edge cases, "did you add a test?", summarizing a
+* **Great for:** catching typos, missing edge cases, "did you add a test?", summarizing a
   large diff
-* ⚠️ still a human's job: is this **in scope**? is the **science** right? is this an API
+* **Still a human's job:** is this **in scope**? is the **science** right? is this an API
   I want to **maintain**?
 
 --
 
 .footnote[
 The bot is a reviewer, not *the* reviewer. Treat its output like any other comment —
-weigh it, don't rubber-stamp it. (More on this at the AI-tools panel.)
+weigh it, don't rubber-stamp it.
 ]
 
 ---
@@ -290,6 +252,13 @@ weigh it, don't rubber-stamp it. (More on this at the AI-tools panel.)
 * https://developers.redhat.com/blog/2019/07/08/10-tips-for-reviewing-code-you-dont-like
 * https://kickstarter.engineering/a-guide-to-mindful-communication-in-code-reviews-48aab5282e5e
 ]
+
+---
+class: middle, center
+
+# Demo: reviewing a real PR
+
+### [ClimKern #48 — "CRE tiling and surface kernel"](https://github.com/tyfolino/climkern/pull/48)
 
 ---
 class: middle, center
